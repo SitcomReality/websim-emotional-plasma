@@ -6,6 +6,7 @@ import { Ball } from './entities/Ball.js';
 import { NPCBehavior } from './utils/NPCBehavior.js';
 import { Zone } from './utils/Zone.js';
 import { ZoneManager } from './utils/ZoneManager.js';
+import { ConnectionManager } from './visuals/ConnectionManager.js';
 
 class EmotionalPlasmaGame {
     constructor() {
@@ -23,6 +24,8 @@ class EmotionalPlasmaGame {
         this.addZones();
 
         this.addNPCs();
+
+        this.connectionManager = new ConnectionManager(this.scene);
         
         this.engine = new GameEngine(
             this.renderer,
@@ -31,7 +34,8 @@ class EmotionalPlasmaGame {
             this.player,
             this.entities,
             this.inputManager,
-            this.zoneManager
+            this.zoneManager,
+            this.connectionManager
         );
         
         this.setupEventListeners();
