@@ -104,32 +104,6 @@ export const PlasmaShader = {
             return value;
         }
 
-        // Radial noise that spirals outward from center
-        float radialFBM(vec2 p, float timeOffset) {
-            // Convert to polar coordinates centered at 0.5, 0.5
-            vec2 center = p - vec2(0.5);
-            float angle = atan(center.y, center.x);
-            float dist = length(center);
-            
-            // Create spiraling effect
-            float spiral = angle + dist * 3.0 - timeOffset * 0.5;
-            
-            // Sample noise in polar space
-            vec2 polarCoord = vec2(spiral, dist);
-            
-            float value = 0.0;
-            float amplitude = 0.6;
-            float frequency = 1.2;
-
-            for(int i = 0; i < 3; i++) {
-                value += amplitude * snoise(polarCoord * frequency + vec2(timeOffset * 0.3, 0.0));
-                frequency *= 1.8;
-                amplitude *= 0.5;
-            }
-            
-            return value;
-        }
-
         vec3 hsl2rgb(vec3 c) {
             vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0);
             return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
@@ -140,12 +114,12 @@ export const PlasmaShader = {
             float timeScale = time * speed;
             float spread = 1.0 + (connectedness * 0.5 + 0.5) * 2.0;
 
-            // Use radial noise for billboards
-            float radialNoise = radialFBM(vUv, timeScale);
-            float noise1 = fbm(vUv * spread + vec2(timeScale * 0.5, 0.0), timeScale);
-            
-            // Blend radial (emanating) and flat noise
-            float plasmaPattern = radialNoise * 0.6 + noise1 * 0.4;
+            vec2 noiseCoord = vUv * spread;
+            float noise1 = fbm(noiseCoord + vec2(timeScale * 0.5, 0.0), timeScale);
+            float noise2 = fbm(noiseCoord + vec2(0.0, timeScale * 0.3), timeScale * 1.3);
+            float noise3 = fbm(noiseCoord * 2.0 - vec2(timeScale * 0.2), timeScale * 0.7);
+
+            float plasmaPattern = noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2;
 
             float hue;
             if (valence > 0.0) {
@@ -253,32 +227,6 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             return value;
         }
 
-        // Radial noise that spirals outward from center
-        float radialFBM(vec2 p, float timeOffset) {
-            // Convert to polar coordinates centered at 0.5, 0.5
-            vec2 center = p - vec2(0.5);
-            float angle = atan(center.y, center.x);
-            float dist = length(center);
-            
-            // Create spiraling effect
-            float spiral = angle + dist * 3.0 - timeOffset * 0.5;
-            
-            // Sample noise in polar space
-            vec2 polarCoord = vec2(spiral, dist);
-            
-            float value = 0.0;
-            float amplitude = 0.6;
-            float frequency = 1.2;
-
-            for(int i = 0; i < 3; i++) {
-                value += amplitude * snoise(polarCoord * frequency + vec2(timeOffset * 0.3, 0.0));
-                frequency *= 1.8;
-                amplitude *= 0.5;
-            }
-            
-            return value;
-        }
-
         vec3 hsl2rgb(vec3 c) {
             vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0);
             return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
@@ -287,13 +235,14 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
         void main() {
             float speed = 0.3 + abs(arousal) * 0.7;
             float timeScale = time * speed;
+            float spread = 1.0 + (connectedness * 0.5 + 0.5) * 2.0;
 
-            // Use radial noise for billboards
-            float radialNoise = radialFBM(vUv, timeScale);
-            float noise1 = fbm(vUv * 1.5 + vec2(timeScale * 0.5, 0.0), timeScale);
-            
-            // Blend radial (emanating) and flat noise for depth
-            float plasmaPattern = radialNoise * 0.7 + noise1 * 0.3;
+            vec2 noiseCoord = vUv * spread;
+            float noise1 = fbm(noiseCoord + vec2(timeScale * 0.5, 0.0), timeScale);
+            float noise2 = fbm(noiseCoord + vec2(0.0, timeScale * 0.3), timeScale * 1.3);
+            float noise3 = fbm(noiseCoord * 2.0 - vec2(timeScale * 0.2), timeScale * 0.7);
+
+            float plasmaPattern = noise1 * 0.5 + noise2 * 0.3 + noise3 * 0.2;
 
             float hue;
             if (valence > 0.0) {

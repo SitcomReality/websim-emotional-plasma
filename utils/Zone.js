@@ -15,7 +15,7 @@ export class Zone {
         this.name = config.name || 'Zone';
         this.color = config.color || 0x888888;
         this.isActive = config.isActive !== false;
-        this.decayRate = config.decayRate || 1; // How quickly effects fade
+        this.decayRate = config.decayRate || 0.2; // How quickly effects fade
 
         // Mesh for visualization
         this.mesh = null;
