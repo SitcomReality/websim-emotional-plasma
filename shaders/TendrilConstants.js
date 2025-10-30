@@ -1,17 +1,17 @@
 export const TendrilConstants = {
     // Geometry
-    tubeRadius: 0.4,           // Increase to make tendrils thicker
+    tubeRadius: 0.1,           // Increase to make tendrils thicker
     tubeSegments: 16,           // Segments along the tube length
-    radialSegments: 8,          // Radial segments (quality)
+    radialSegments: 4,          // Radial segments (quality)
     curvePoints: 10,            // Number of midpoints for wobble
     
     // Animation & Flow
     flowSpeed: 1.5,             // How fast noise flows through tendril
-    wobbleAmount: 0.2,          // Base wobble intensity
+    wobbleAmount: 0.1,          // Base wobble intensity
     
     // Opacity & Blending
     baseOpacity: 0.8,           // Base alpha value (0-1)
-    centerPeakOpacity: 1.0,     // Peak opacity at connection center
+    centerPeakOpacity: 0.8,     // Peak opacity at connection center
     fadeExponent: 2.0,          // How sharply opacity fades at edges
     
     // Growth Animation
@@ -28,6 +28,6 @@ export const TendrilConstants = {
     colorIntensity: 2.5,         // Boost to make colors more vibrant
 
     // Connection Logic
-    connectionThreshold: 0.3,
-    connectionDistance: 30
+    connectionThreshold: 0.1,
+    connectionDistance: 10
 };
