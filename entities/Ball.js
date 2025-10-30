@@ -62,7 +62,7 @@ export class Ball {
 
         // Plasma billboard
         // Match doubled aura diameter: radius = size * 5 -> diameter = size * 10
-        const plasmaSize = this.size * 10.0; // Diameter of doubled aura
+        const plasmaSize = this.size * 6.0; // Diameter of doubled aura
         const billboardGeometry = new THREE.PlaneGeometry(plasmaSize, plasmaSize);
         this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState, true); // true = billboard mode
         this.plasmaBillboard = new THREE.Mesh(billboardGeometry, this.shaderMaterial);

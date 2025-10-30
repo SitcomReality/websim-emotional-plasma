@@ -1,40 +1,9 @@
 import * as THREE from 'three';
 import { createTendrilMaterial } from '../shaders/TendrilShader.js';
-
-// TUNABLE CONSTANTS: Modify these to adjust visual representation of tendrils
-export const TendrilVisualConfig = {
-    // Geometry
-    tubeRadius: 0.25,           // Increased from 0.15 for better visibility
-    tubeSegments: 16,
-    radialSegments: 8,
-    curvePoints: 10,
-    
-    // Visibility
-    baseOpacity: 0.9,
-    centerPeakOpacity: 1.0,
-    fadeExponent: 2.0,
-    
-    // Animation
-    flowSpeed: 1.5,
-    wobbleAmount: 0.3,
-    
-    // Growth
-    growthDuration: 500,
-    
-    // Effects
-    turbulenceStrength: 1.0,
-    harmonyCohesion: 0.5,
-    drainingFlow: 2.0,
-    conflictFlicker: 10.0,
-    colorIntensity: 1.2,
-    
-    // Connection threshold
-    connectionThreshold: 0.3,
-    connectionDistance: 40              // Increased from 20 for longer-range tendrils
-};
+import { TendrilConstants } from '../shaders/TendrilConstants.js';
 
 class ConnectionTendril {
-    constructor(ballA, ballB, scene, config = TendrilVisualConfig) {
+    constructor(ballA, ballB, scene, config = TendrilConstants) {
         this.ballA = ballA;
         this.ballB = ballB;
         this.scene = scene;
@@ -145,7 +114,7 @@ class ConnectionTendril {
 }
 
 export class ConnectionManager {
-    constructor(scene, config = TendrilVisualConfig) {
+    constructor(scene, config = TendrilConstants) {
         this.scene = scene;
         this.config = config;
         this.connections = new Map(); // Use a map to store connections, key is pair of IDs
