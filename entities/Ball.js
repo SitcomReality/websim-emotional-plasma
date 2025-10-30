@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { EmotionalState } from '../utils/EmotionalState.js';
 import { EmotionalStateMachine } from '../utils/EmotionalStateMachine.js';
 import { NPCBehavior } from '../utils/NPCBehavior.js';
+import { createPlasmaShaderMaterial } from '../shaders/PlasmaShader.js';
 
 export class Ball {
     constructor(scene, position = new THREE.Vector3(0, 0.5, 0), size = 0.5) {
@@ -21,6 +22,7 @@ export class Ball {
         this.friction = 0.85;
 
         this.mesh = null;
+        this.shaderMaterial = null;
         this.createMesh();
         
         // AI behavior (for NPCs)
@@ -30,14 +32,9 @@ export class Ball {
 
     createMesh() {
         const geometry = new THREE.SphereGeometry(this.size, 32, 32);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            metalness: 0.3,
-            roughness: 0.4,
-            emissive: 0x222222
-        });
+        this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState);
 
-        this.mesh = new THREE.Mesh(geometry, material);
+        this.mesh = new THREE.Mesh(geometry, this.shaderMaterial);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.scene.add(this.mesh);
@@ -60,7 +57,7 @@ export class Ball {
 
         // Update mesh
         this.updateMeshPosition();
-        this.updateMeshColor();
+        this.updateShaderUniforms(deltaTime);
     }
 
     applyForce(force) {
@@ -86,12 +83,12 @@ export class Ball {
         this.mesh.position.copy(this.position);
     }
 
-    updateMeshColor() {
-        const colorData = this.emotionalState.getColor();
-        const hsl = `hsl(${colorData.h}, ${colorData.s}%, ${colorData.l}%)`;
-
-        if (this.mesh.material.color) {
-            this.mesh.material.color.setStyle(hsl);
+    updateShaderUniforms(deltaTime) {
+        if (this.shaderMaterial && this.shaderMaterial.uniforms) {
+            this.shaderMaterial.uniforms.time.value += deltaTime;
+            this.shaderMaterial.uniforms.valence.value = this.emotionalState.valence;
+            this.shaderMaterial.uniforms.arousal.value = this.emotionalState.arousal;
+            this.shaderMaterial.uniforms.connectedness.value = this.emotionalState.socialConnectedness;
         }
     }
 
@@ -113,7 +110,9 @@ export class Ball {
         if (this.mesh) {
             this.scene.remove(this.mesh);
             this.mesh.geometry.dispose();
-            this.mesh.material.dispose();
+            if (this.shaderMaterial) {
+                this.shaderMaterial.dispose();
+            }
         }
     }
 }
