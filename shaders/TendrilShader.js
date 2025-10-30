@@ -29,6 +29,17 @@ export const TendrilShader = {
         uniform vec3 colorB;
         uniform float interactionType; // 0: harmonious, 1: draining A->B, 2: conflicting
         uniform float connectionStrength; // 0 to 1 for growth
+        uniform float turbulence;
+        
+        // NEW: Tunable constants exposed as uniforms
+        uniform float flowSpeed;
+        uniform float baseOpacity;
+        uniform float centerPeakOpacity;
+        uniform float fadeExponent;
+        uniform float harmonyCohesion;
+        uniform float drainingFlow;
+        uniform float conflictFlicker;
+        uniform float colorIntensity;
 
         ${GLSL_SNOISE}
 
@@ -45,11 +56,12 @@ export const TendrilShader = {
             }
 
             // Opacity: peaks at center, fades towards ends
-            float opacity = 1.0 - pow(abs(vUv.x - 0.5) * 2.0, 2.0);
+            float edgeDistance = abs(vUv.x - 0.5) * 2.0;
+            float opacity = pow(1.0 - edgeDistance, fadeExponent);
             opacity = smoothstep(0.0, 1.0, opacity);
+            opacity = mix(baseOpacity, centerPeakOpacity, opacity);
 
             // Internal flow noise
-            float flowSpeed = 1.5;
             vec2 noiseCoord1 = vec2(vUv.x * 4.0 - time * flowSpeed, vUv.y * 2.0);
             vec2 noiseCoord2 = vec2(vUv.x * 4.0 + time * flowSpeed, vUv.y * 2.0);
 
@@ -61,25 +73,26 @@ export const TendrilShader = {
 
             // Blend colors and noise based on interaction type
             if (interactionType < 0.5) { // Harmonious
-                combinedNoise = (noise1 + noise2) * 0.5;
+                combinedNoise = mix(noise1, noise2, harmonyCohesion) * 0.5;
                 finalColor = mix(colorA, colorB, vUv.x);
             } else if (interactionType < 1.5) { // Draining A -> B
                 float flowProgress = smoothstep(0.0, 1.0, vUv.x);
-                combinedNoise = mix(noise1, -noise2, flowProgress); // Flow from A to B
+                combinedNoise = mix(noise1, -noise2, flowProgress) * drainingFlow;
                 finalColor = mix(colorA, colorB, vUv.x);
             } else { // Conflicting
-                combinedNoise = (noise1 - noise2) * (snoise(vec2(time*10.0, 0.0)) * 0.5 + 0.5);
+                combinedNoise = (noise1 - noise2) * (snoise(vec2(time * conflictFlicker, 0.0)) * 0.5 + 0.5);
                 finalColor = mix(colorA, colorB, vUv.x);
                 // Flicker effect
-                if (mod(time * 10.0, 1.0) < 0.5) {
+                if (mod(time * conflictFlicker, 1.0) < 0.5) {
                     finalColor *= 0.8;
                 }
             }
 
             // Add noise to color
             finalColor += combinedNoise * 0.2;
+            finalColor *= colorIntensity;
 
-            gl_FragColor = vec4(finalColor, opacity * 0.7);
+            gl_FragColor = vec4(finalColor, opacity * connectionStrength);
         }
     `
 };
@@ -95,6 +108,15 @@ export function createTendrilMaterial() {
             interactionType: { value: 0.0 }, // 0: harmonious, 1: draining, 2: conflicting
             connectionStrength: { value: 0.0 },
             turbulence: { value: 0.0 },
+            // NEW: Tunable uniforms
+            flowSpeed: { value: 1.5 },
+            baseOpacity: { value: 0.9 },
+            centerPeakOpacity: { value: 1.0 },
+            fadeExponent: { value: 2.0 },
+            harmonyCohesion: { value: 0.5 },
+            drainingFlow: { value: 2.0 },
+            conflictFlicker: { value: 10.0 },
+            colorIntensity: { value: 1.2 }
         },
         transparent: true,
         blending: THREE.AdditiveBlending,
