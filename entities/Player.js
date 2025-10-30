@@ -1,37 +1,25 @@
 import * as THREE from 'three';
-import { EmotionalState } from '../utils/EmotionalState.js';
+import { Ball } from './Ball.js';
 
-export class Player {
+export class Player extends Ball {
     constructor(scene) {
-        this.scene = scene;
-        this.position = new THREE.Vector3(0, 0, 0);
-        this.velocity = new THREE.Vector3(0, 0, 0);
+        super(scene, new THREE.Vector3(0, 0, 0), 0.5);
         this.speed = 5;
         
-        this.emotionalState = new EmotionalState();
-        
-        this.createMesh();
-        this.updateUI();
-    }
-    
-    createMesh() {
-        // Create the core ball
-        const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            metalness: 0.3,
-            roughness: 0.4
-        });
-        
-        this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.castShadow = true;
-        this.scene.add(this.mesh);
+        // Set initial emotional state (slightly positive, neutral arousal, connected)
+        this.emotionalState.valence = 0.3;
+        this.emotionalState.arousal = 0;
+        this.emotionalState.socialConnectedness = 0.2;
     }
     
     update(deltaTime, inputManager) {
         this.handleInput(deltaTime, inputManager);
-        this.updatePosition(deltaTime);
-        this.emotionalState.update(deltaTime);
+        this.updatePhysics(deltaTime);
+        
+        // Call parent update
+        super.update(deltaTime);
+        
+        // Update UI
         this.updateUI();
     }
     
@@ -45,21 +33,16 @@ export class Player {
         
         if (moveVector.length() > 0) {
             moveVector.normalize();
-            this.velocity.copy(moveVector.multiplyScalar(this.speed));
-        } else {
-            this.velocity.multiplyScalar(0.9); // Friction
+            this.applyForce(moveVector.multiplyScalar(this.speed));
         }
-    }
-    
-    updatePosition(deltaTime) {
-        this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
-        this.mesh.position.copy(this.position);
     }
     
     updateUI() {
         const valenceBar = document.getElementById('valence-bar');
         const arousalBar = document.getElementById('arousal-bar');
         const connectionBar = document.getElementById('connection-bar');
+        
+        if (!valenceBar || !arousalBar || !connectionBar) return;
         
         // Map from [-1, 1] to [0, 100]
         const valencePercent = ((this.emotionalState.valence + 1) / 2) * 100;
