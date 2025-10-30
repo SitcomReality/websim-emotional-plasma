@@ -1,5 +1,28 @@
 import * as THREE from 'three';
 
+// Shader tuning constants for easier adjustment
+export const PlasmaConstants = {
+    // Alpha/Opacity
+    baseAlpha: 0.3,              // Minimum alpha when emotional strength is low
+    emotionalAlphaRange: 0.7,    // Additional alpha based on emotional strength (0.3 + 0.7 = 1.0 max)
+    noiseAlphaInfluence: 0.5,    // How much noise pattern affects alpha variation
+    
+    // Radial falloff
+    falloffStart: 0.5,           // Where radial gradient begins (0 = center, 1 = edge)
+    falloffEnd: 0.0,             // Where radial gradient ends
+    
+    // Emissive/Brightness
+    baseEmissive: 0.2,           // Base emission intensity
+    arousalEmissiveRange: 0.3,   // Additional emission based on arousal
+    
+    // Noise/Plasma motion
+    noiseFBMLayers: 4,           // Number of noise octaves (quality vs performance)
+    
+    // Color intensity
+    colorSaturation: 0.5,        // Base saturation multiplier
+    arousalSaturation: 0.5       // Additional saturation from arousal
+};
+
 export const PlasmaShader = {
     vertexShader: `
         varying vec2 vUv;
@@ -20,6 +43,16 @@ export const PlasmaShader = {
         uniform float arousal;
         uniform float connectedness;
         uniform vec3 baseColor;
+        uniform float plasmaIntensity;
+        uniform float baseAlpha;
+        uniform float emotionalAlphaRange;
+        uniform float noiseAlphaInfluence;
+        uniform float falloffStart;
+        uniform float falloffEnd;
+        uniform float baseEmissive;
+        uniform float arousalEmissiveRange;
+        uniform float colorSaturation;
+        uniform float arousalSaturation;
 
         varying vec2 vUv;
         varying vec3 vPosition;
@@ -95,7 +128,7 @@ export const PlasmaShader = {
                 hue = (240.0 + valence * 60.0) / 360.0;
             }
 
-            float saturation = 0.5 + abs(arousal) * 0.5;
+            float saturation = colorSaturation + abs(arousal) * arousalSaturation;
             float lightness = 0.5 + connectedness * 0.2;
 
             hue += plasmaPattern * 0.05;
@@ -104,21 +137,21 @@ export const PlasmaShader = {
             vec3 hslColor = vec3(hue, saturation, lightness);
             vec3 rgbColor = hsl2rgb(hslColor);
 
-            // Radial falloff from center - plasma is more focused around the ball
+            // Radial falloff from center
             float dist = distance(vUv, vec2(0.5));
             
             // Emotional strength affects overall opacity
             float emotionalStrength = (abs(valence) + abs(arousal) + abs(connectedness)) / 3.0;
             
-            // Plasma swirls are visible but fade with distance from center
-            float plasmaAlpha = smoothstep(0.5, 0.0, dist) * (0.3 + emotionalStrength * 0.7);
+            // Plasma swirls with intensity control
+            float plasmaAlpha = smoothstep(falloffStart, falloffEnd, dist) * (baseAlpha + emotionalStrength * emotionalAlphaRange);
             
             // Add noise-based variation to alpha
-            float noiseAlpha = (plasmaPattern * 0.5 + 0.5) * plasmaAlpha;
+            float noiseAlpha = (plasmaPattern * noiseAlphaInfluence + (1.0 - noiseAlphaInfluence)) * plasmaAlpha;
             
-            float alpha = noiseAlpha;
+            float alpha = noiseAlpha * plasmaIntensity;
 
-            float emissive = 0.2 + abs(arousal) * 0.3;
+            float emissive = baseEmissive + abs(arousal) * arousalEmissiveRange;
             rgbColor = mix(rgbColor, rgbColor * 1.5, emissive);
 
             gl_FragColor = vec4(rgbColor, alpha);
@@ -133,6 +166,16 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
         uniform float arousal;
         uniform float connectedness;
         uniform vec3 baseColor;
+        uniform float plasmaIntensity;
+        uniform float baseAlpha;
+        uniform float emotionalAlphaRange;
+        uniform float noiseAlphaInfluence;
+        uniform float falloffStart;
+        uniform float falloffEnd;
+        uniform float baseEmissive;
+        uniform float arousalEmissiveRange;
+        uniform float colorSaturation;
+        uniform float arousalSaturation;
 
         varying vec2 vUv;
         varying vec3 vPosition;
@@ -208,7 +251,7 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
                 hue = (240.0 + valence * 60.0) / 360.0;
             }
 
-            float saturation = 0.5 + abs(arousal) * 0.5;
+            float saturation = colorSaturation + abs(arousal) * arousalSaturation;
             float lightness = 0.5 + connectedness * 0.2;
 
             hue += plasmaPattern * 0.05;
@@ -217,29 +260,21 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             vec3 hslColor = vec3(hue, saturation, lightness);
             vec3 rgbColor = hsl2rgb(hslColor);
 
-            // Radial falloff from center - plasma is more focused around the ball
+            // Radial falloff from center
             float dist = distance(vUv, vec2(0.5));
             
             // Emotional strength affects overall opacity
             float emotionalStrength = (abs(valence) + abs(arousal) + abs(connectedness)) / 3.0;
             
-            // Plasma swirls are visible but fade with distance from center
-            float plasmaAlpha = smoothstep(0.5, 0.0, dist) * (0.3 + emotionalStrength * 0.7);
+            // Plasma swirls with intensity control
+            float plasmaAlpha = smoothstep(falloffStart, falloffEnd, dist) * (baseAlpha + emotionalStrength * emotionalAlphaRange);
             
             // Add noise-based variation to alpha
-            float noiseAlpha = (plasmaPattern * 0.5 + 0.5) * plasmaAlpha;
+            float noiseAlpha = (plasmaPattern * noiseAlphaInfluence + (1.0 - noiseAlphaInfluence)) * plasmaAlpha;
             
-            float alpha = noiseAlpha;
+            float alpha = noiseAlpha * plasmaIntensity;
 
-            // Billboard-specific enhancement: boost outer region visibility (less occluded by the ball)
-            float rimBoost = smoothstep(0.25, 0.6, dist); // stronger boost further from center
-            float boostFactor = mix(1.2, 1.8, rimBoost); // amplify outer plasma more
-            alpha *= boostFactor;
-
-            // Clamp alpha to reasonable range to avoid extreme brightness
-            alpha = clamp(alpha, 0.0, 1.0);
-
-            float emissive = 0.2 + abs(arousal) * 0.3;
+            float emissive = baseEmissive + abs(arousal) * arousalEmissiveRange;
             rgbColor = mix(rgbColor, rgbColor * 1.5, emissive);
 
             gl_FragColor = vec4(rgbColor, alpha);
@@ -254,13 +289,21 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             valence: { value: emotionalState.valence },
             arousal: { value: emotionalState.arousal },
             connectedness: { value: emotionalState.socialConnectedness },
-            baseColor: { value: new THREE.Color(0xffffff) }
+            baseColor: { value: new THREE.Color(0xffffff) },
+            plasmaIntensity: { value: 1.5 },
+            baseAlpha: { value: PlasmaConstants.baseAlpha },
+            emotionalAlphaRange: { value: PlasmaConstants.emotionalAlphaRange },
+            noiseAlphaInfluence: { value: PlasmaConstants.noiseAlphaInfluence },
+            falloffStart: { value: PlasmaConstants.falloffStart },
+            falloffEnd: { value: PlasmaConstants.falloffEnd },
+            baseEmissive: { value: PlasmaConstants.baseEmissive },
+            arousalEmissiveRange: { value: PlasmaConstants.arousalEmissiveRange },
+            colorSaturation: { value: PlasmaConstants.colorSaturation },
+            arousalSaturation: { value: PlasmaConstants.arousalSaturation }
         },
         side: THREE.FrontSide,
         transparent: true,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        // For billboards we want them to remain visible even where the sphere might occlude
-        depthTest: isBillboard ? false : true
+        blending: THREE.AdditiveBlending
     });
 }
