@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export class GameEngine {
     constructor(renderer, scene, camera, player, inputManager) {
         this.renderer = renderer;
@@ -52,4 +54,3 @@ export class GameEngine {
         this.renderer.render(this.scene, this.camera);
     }
 }
-
