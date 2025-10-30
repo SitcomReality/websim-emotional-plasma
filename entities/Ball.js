@@ -26,6 +26,7 @@ export class Ball {
         this.auraMesh = null; // This will now be an invisible hitbox
         this.plasmaBillboard = null;
         this.shaderMaterial = null;
+        this.ballShaderMaterial = null;
         this.createMesh();
         
         // AI behavior (for NPCs)
@@ -35,12 +36,14 @@ export class Ball {
 
     createMesh() {
         const geometry = new THREE.SphereGeometry(this.size, 32, 32);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0x111111,
-            metalness: 0.2,
-            roughness: 0.1
-        });
-        this.mesh = new THREE.Mesh(geometry, material);
+        
+        // Give the ball itself plasma
+        this.ballShaderMaterial = createPlasmaShaderMaterial(this.emotionalState);
+        this.ballShaderMaterial.transparent = false;
+        this.ballShaderMaterial.depthWrite = true;
+        this.ballShaderMaterial.blending = THREE.NormalBlending;
+        
+        this.mesh = new THREE.Mesh(geometry, this.ballShaderMaterial);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.scene.add(this.mesh);
@@ -56,7 +59,7 @@ export class Ball {
         // Plasma billboard
         const plasmaSize = this.size * 2.5 * 2; // Diameter of aura
         const billboardGeometry = new THREE.PlaneGeometry(plasmaSize, plasmaSize);
-        this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState);
+        this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState, true); // true = billboard mode
         this.plasmaBillboard = new THREE.Mesh(billboardGeometry, this.shaderMaterial);
         this.scene.add(this.plasmaBillboard);
 
@@ -113,6 +116,15 @@ export class Ball {
     }
 
     updateShaderUniforms(deltaTime) {
+        // Update ball shader
+        if (this.ballShaderMaterial && this.ballShaderMaterial.uniforms) {
+            this.ballShaderMaterial.uniforms.time.value += deltaTime;
+            this.ballShaderMaterial.uniforms.valence.value = this.emotionalState.valence;
+            this.ballShaderMaterial.uniforms.arousal.value = this.emotionalState.arousal;
+            this.ballShaderMaterial.uniforms.connectedness.value = this.emotionalState.socialConnectedness;
+        }
+        
+        // Update billboard shader
         if (this.shaderMaterial && this.shaderMaterial.uniforms) {
             this.shaderMaterial.uniforms.time.value += deltaTime;
             this.shaderMaterial.uniforms.valence.value = this.emotionalState.valence;
@@ -156,14 +168,21 @@ export class Ball {
         if (this.mesh) {
             this.scene.remove(this.mesh);
             this.mesh.geometry.dispose();
-            if (this.shaderMaterial) {
-                this.shaderMaterial.dispose();
+            if (this.ballShaderMaterial) {
+                this.ballShaderMaterial.dispose();
             }
+        }
+        if (this.shaderMaterial) {
+            this.shaderMaterial.dispose();
         }
         if (this.auraMesh) {
             this.scene.remove(this.auraMesh);
             this.auraMesh.geometry.dispose();
             this.auraMesh.material.dispose();
+        }
+        if (this.plasmaBillboard) {
+            this.scene.remove(this.plasmaBillboard);
+            this.plasmaBillboard.geometry.dispose();
         }
     }
 }
