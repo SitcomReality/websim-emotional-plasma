@@ -4,33 +4,33 @@ import { createTendrilMaterial } from '../shaders/TendrilShader.js';
 // TUNABLE CONSTANTS: Modify these to adjust visual representation of tendrils
 export const TendrilVisualConfig = {
     // Geometry
-    tubeRadius: 0.15,           // Increase to 0.3 for thicker, more visible tendrils
+    tubeRadius: 0.25,           // Increased from 0.15 for better visibility
     tubeSegments: 16,
     radialSegments: 8,
     curvePoints: 10,
     
     // Visibility
-    baseOpacity: 0.9,           // Try 1.0 for fully opaque tendrils
-    centerPeakOpacity: 1.0,     // Opacity at connection center
-    fadeExponent: 2.0,          // Lower = softer edges, higher = sharper falloff
+    baseOpacity: 0.9,
+    centerPeakOpacity: 1.0,
+    fadeExponent: 2.0,
     
     // Animation
-    flowSpeed: 1.5,             // Higher = faster flow animation
-    wobbleAmount: 0.3,          // Increase for more dramatic wobble
+    flowSpeed: 1.5,
+    wobbleAmount: 0.3,
     
     // Growth
-    growthDuration: 500,        // Milliseconds to fully grow (lower = faster)
+    growthDuration: 500,
     
     // Effects
-    turbulenceStrength: 1.0,    // Increase for more chaotic conflicts
-    harmonyCohesion: 0.5,       // Higher = more coherent harmonious flows
-    drainingFlow: 2.0,          // Intensity of draining effect
-    conflictFlicker: 10.0,      // Frequency of flicker in conflicts
-    colorIntensity: 1.2,        // Boost colors (try 2.0 for very vibrant)
+    turbulenceStrength: 1.0,
+    harmonyCohesion: 0.5,
+    drainingFlow: 2.0,
+    conflictFlicker: 10.0,
+    colorIntensity: 1.2,
     
     // Connection threshold
     connectionThreshold: 0.3,
-    connectionDistance: 20
+    connectionDistance: 40              // Increased from 20 for longer-range tendrils
 };
 
 class ConnectionTendril {
