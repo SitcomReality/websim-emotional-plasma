@@ -46,11 +46,6 @@ export class GameEngine {
             }
         }
         
-        // Update nearby balls tracking for plasma flow effects
-        for (const entity of this.entities) {
-            entity.updateNearbyBalls(this.entities);
-        }
-        
         // Apply zone effects
         if (this.zoneManager) {
             this.zoneManager.update(this.entities, deltaTime);

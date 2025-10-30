@@ -32,9 +32,6 @@ export class Ball {
         // AI behavior (for NPCs)
         this.isNPC = false;
         this.behavior = null;
-        
-        // Nearby balls for plasma interaction
-        this.nearbyBalls = [];
     }
 
     createMesh() {
@@ -133,24 +130,6 @@ export class Ball {
             this.shaderMaterial.uniforms.valence.value = this.emotionalState.valence;
             this.shaderMaterial.uniforms.arousal.value = this.emotionalState.arousal;
             this.shaderMaterial.uniforms.connectedness.value = this.emotionalState.socialConnectedness;
-            
-            // Update world position
-            this.shaderMaterial.uniforms.ballWorldPos.value.copy(this.position);
-            
-            // Update nearby balls positions
-            const maxNearby = 4;
-            const nearbyPositions = this.nearbyBalls.slice(0, maxNearby);
-            
-            for (let i = 0; i < maxNearby; i++) {
-                if (i < nearbyPositions.length) {
-                    this.shaderMaterial.uniforms.nearbyBalls.value[i].copy(nearbyPositions[i].position);
-                } else {
-                    // Set far away if slot not used
-                    this.shaderMaterial.uniforms.nearbyBalls.value[i].set(9999, 9999, 9999);
-                }
-            }
-            
-            this.shaderMaterial.uniforms.nearbyBallCount.value = nearbyPositions.length;
         }
     }
 
@@ -169,28 +148,6 @@ export class Ball {
             // Billboard logic
             this.plasmaBillboard.quaternion.copy(this.camera.quaternion);
         }
-    }
-    
-    updateNearbyBalls(allBalls) {
-        // Find nearby balls within interaction range
-        this.nearbyBalls = [];
-        const maxDistance = 10; // Maximum distance to consider
-        
-        for (const otherBall of allBalls) {
-            if (otherBall === this) continue;
-            
-            const distance = this.position.distanceTo(otherBall.position);
-            if (distance < maxDistance) {
-                this.nearbyBalls.push(otherBall);
-            }
-        }
-        
-        // Sort by distance, closest first
-        this.nearbyBalls.sort((a, b) => {
-            const distA = this.position.distanceTo(a.position);
-            const distB = this.position.distanceTo(b.position);
-            return distA - distB;
-        });
     }
 
     setEmotionalState(valence, arousal, connectedness) {
