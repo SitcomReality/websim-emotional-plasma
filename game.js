@@ -4,6 +4,8 @@ import { Player } from './entities/Player.js';
 import { InputManager } from './utils/InputManager.js';
 import { Ball } from './entities/Ball.js';
 import { NPCBehavior } from './utils/NPCBehavior.js';
+import { Zone } from './utils/Zone.js';
+import { ZoneManager } from './utils/ZoneManager.js';
 
 class EmotionalPlasmaGame {
     constructor() {
@@ -16,6 +18,9 @@ class EmotionalPlasmaGame {
         this.inputManager = new InputManager();
         this.player = new Player(this.scene);
         this.entities = [this.player];
+        
+        this.zoneManager = new ZoneManager(this.scene);
+        this.addZones();
 
         this.addNPCs();
         
@@ -25,7 +30,8 @@ class EmotionalPlasmaGame {
             this.camera,
             this.player,
             this.entities,
-            this.inputManager
+            this.inputManager,
+            this.zoneManager
         );
         
         this.setupEventListeners();
@@ -65,6 +71,66 @@ class EmotionalPlasmaGame {
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(5, 10, 7);
         this.scene.add(directionalLight);
+    }
+    
+    addZones() {
+        // Peaceful sanctuary - increases valence and connectedness
+        const peacefulZone = new Zone(
+            new THREE.Vector3(10, 0.5, 10),
+            4,
+            {
+                name: 'Peaceful Sanctuary',
+                color: 0x4CAF50,
+                valenceEffect: 0.5,
+                connectednessEffect: 0.3,
+                arousalEffect: -0.2
+            }
+        );
+        this.zoneManager.addZone(peacefulZone);
+        
+        // Energy spike - increases arousal
+        const energyZone = new Zone(
+            new THREE.Vector3(-10, 0.5, 10),
+            3.5,
+            {
+                name: 'Energy Surge',
+                color: 0xFF9800,
+                valenceEffect: 0.1,
+                arousalEffect: 0.6,
+                connectednessEffect: -0.1
+            }
+        );
+        this.zoneManager.addZone(energyZone);
+        
+        // Isolation pit - decreases connectedness
+        const isolationZone = new Zone(
+            new THREE.Vector3(-10, 0.5, -10),
+            4,
+            {
+                name: 'Isolation Pit',
+                color: 0x2196F3,
+                valenceEffect: -0.3,
+                connectednessEffect: -0.5,
+                arousalEffect: 0.2,
+                forceMultiplier: 0.5 // Slight push away
+            }
+        );
+        this.zoneManager.addZone(isolationZone);
+        
+        // Chaotic vortex - negative effects, pulls inward
+        const chaosZone = new Zone(
+            new THREE.Vector3(10, 0.5, -10),
+            3,
+            {
+                name: 'Chaotic Vortex',
+                color: 0x9C27B0,
+                valenceEffect: -0.4,
+                arousalEffect: 0.5,
+                connectednessEffect: -0.2,
+                forceMultiplier: -1 // Pull inward
+            }
+        );
+        this.zoneManager.addZone(chaosZone);
     }
     
     addNPCs() {

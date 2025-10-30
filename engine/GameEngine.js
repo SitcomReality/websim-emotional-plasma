@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 
 export class GameEngine {
-    constructor(renderer, scene, camera, player, entities, inputManager) {
+    constructor(renderer, scene, camera, player, entities, inputManager, zoneManager) {
         this.renderer = renderer;
         this.scene = scene;
         this.camera = camera;
         this.player = player;
         this.entities = entities;
         this.inputManager = inputManager;
+        this.zoneManager = zoneManager;
         
         this.clock = new THREE.Clock();
         this.isRunning = false;
@@ -42,6 +43,11 @@ export class GameEngine {
             } else {
                 entity.update(deltaTime);
             }
+        }
+        
+        // Apply zone effects
+        if (this.zoneManager) {
+            this.zoneManager.update(this.entities, deltaTime);
         }
         
         this.handleInteractions(deltaTime);
