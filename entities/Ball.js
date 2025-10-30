@@ -52,7 +52,8 @@ export class Ball {
         this.scene.add(this.mesh);
         
         // Aura mesh (now an invisible hitbox)
-        const auraGeometry = new THREE.SphereGeometry(this.size * 2.5, 32, 32);
+        // doubled radius: previously size * 2.5 -> now size * 5
+        const auraGeometry = new THREE.SphereGeometry(this.size * 5.0, 32, 32);
         const auraMaterial = new THREE.MeshBasicMaterial({
             visible: false
         });
@@ -60,7 +61,8 @@ export class Ball {
         this.scene.add(this.auraMesh);
 
         // Plasma billboard
-        const plasmaSize = this.size * 2.5 * 2; // Diameter of aura
+        // Match doubled aura diameter: radius = size * 5 -> diameter = size * 10
+        const plasmaSize = this.size * 10.0; // Diameter of doubled aura
         const billboardGeometry = new THREE.PlaneGeometry(plasmaSize, plasmaSize);
         this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState, true); // true = billboard mode
         this.plasmaBillboard = new THREE.Mesh(billboardGeometry, this.shaderMaterial);
@@ -156,12 +158,14 @@ export class Ball {
 
     updateAuraAndBillboard(deltaTime) {
         if (this.auraMesh && this.plasmaBillboard) {
-            const baseScale = 2.5;
+            // baseScale reflects the radius multiplier used to construct the aura geometry (now doubled)
+            const baseScale = 5.0;
             const connectednessScale = Math.max(0, this.emotionalState.socialConnectedness) * 1.5;
             const arousalScale = Math.abs(this.emotionalState.arousal) * 0.5;
             const newScale = baseScale + connectednessScale + arousalScale;
 
-            const finalScale = newScale / 2.5; // Plane scale is relative to its geometry size
+            // Plane geometry was created to match the doubled diameter, so normalize by the baseScale
+            const finalScale = newScale / baseScale; // Plane scale is relative to its geometry size
             
             this.auraMesh.scale.set(finalScale, finalScale, finalScale);
             this.plasmaBillboard.scale.set(finalScale, finalScale, finalScale);
