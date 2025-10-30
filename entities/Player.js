@@ -52,6 +52,12 @@ export class Player extends Ball {
         valenceBar.style.width = `${valencePercent}%`;
         arousalBar.style.width = `${arousalPercent}%`;
         connectionBar.style.width = `${connectionPercent}%`;
+        
+        // Add state display
+        const stateInfo = this.stateMachine.getStateInfo();
+        const stateElement = document.getElementById('emotional-state-label');
+        if (stateElement) {
+            stateElement.textContent = stateInfo.currentState.toUpperCase();
+        }
     }
 }
-

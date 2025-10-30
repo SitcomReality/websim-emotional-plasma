@@ -1,77 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Space Mono', monospace;
-    background: #000;
-    color: #fff;
-    overflow: hidden;
-}
-
-#game-container {
-    width: 100vw;
-    height: 100vh;
-    position: relative;
-}
-
-#game-canvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-#ui-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
-
-#emotional-state {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 15px;
-    border-radius: 4px;
-    min-width: 200px;
-}
-
-.state-bar {
+#emotional-state-label {
+    font-size: 9px;
     margin-bottom: 10px;
-}
-
-.state-bar:last-child {
-    margin-bottom: 0;
-}
-
-.state-bar .label {
-    display: block;
-    font-size: 11px;
-    margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 1px;
-}
-
-.state-bar .bar {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.state-bar .fill {
-    height: 100%;
-    background: #fff;
-    transition: width 0.3s ease;
-    border-radius: 4px;
+    color: #aaa;
 }
 

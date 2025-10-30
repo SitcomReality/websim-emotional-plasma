@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { EmotionalState } from '../utils/EmotionalState.js';
+import { EmotionalStateMachine } from '../utils/EmotionalStateMachine.js';
 
 export class Ball {
     constructor(scene, position = new THREE.Vector3(0, 0, 0), size = 0.5) {
@@ -12,6 +13,7 @@ export class Ball {
 
         // Emotional state (core attributes)
         this.emotionalState = new EmotionalState();
+        this.stateMachine = new EmotionalStateMachine(this.emotionalState);
 
         // Physics
         this.mass = 1;
@@ -41,6 +43,9 @@ export class Ball {
     update(deltaTime) {
         // Update emotional state
         this.emotionalState.update(deltaTime);
+        
+        // Update state machine
+        this.stateMachine.update(deltaTime);
 
         // Update mesh
         this.updateMeshPosition();
