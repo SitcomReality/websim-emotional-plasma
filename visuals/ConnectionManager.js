@@ -79,8 +79,8 @@ export class ConnectionManager {
         const checkedPairs = new Set();
         const activeKeys = new Set();
 
-        const connectionThreshold = 0.6;
-        const connectionDistance = 8;
+        const connectionThreshold = 0.3;
+        const connectionDistance = 20;
 
         for (let i = 0; i < entities.length; i++) {
             for (let j = i + 1; j < entities.length; j++) {
