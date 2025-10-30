@@ -3,9 +3,9 @@ export const EmotionalConstants = {
     // Decay rates (how quickly emotions return to neutral when not influenced)
     // Lower = slower decay (emotions last longer)
     decay: {
-        valence: 0.05,        // How fast positive/negative fades
-        arousal: 0.15,        // How fast energy level normalizes
-        connectedness: 0.08   // How fast connection feeling fades
+        valence: 0.01,        // How fast positive/negative fades
+        arousal: 0.01,        // How fast energy level normalizes
+        connectedness: 0.02   // How fast connection feeling fades
     },
     
     // Accrual rates (how quickly emotions build up from interactions)
