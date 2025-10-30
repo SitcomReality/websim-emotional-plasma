@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { GameEngine } from './engine/GameEngine.js';
 import { Player } from './entities/Player.js';
 import { InputManager } from './utils/InputManager.js';
+import { Ball } from './entities/Ball.js';
 
 class EmotionalPlasmaGame {
     constructor() {
@@ -13,12 +14,16 @@ class EmotionalPlasmaGame {
         
         this.inputManager = new InputManager();
         this.player = new Player(this.scene);
+        this.entities = [this.player];
+
+        this.addNPCs();
         
         this.engine = new GameEngine(
             this.renderer,
             this.scene,
             this.camera,
             this.player,
+            this.entities,
             this.inputManager
         );
         
@@ -59,6 +64,18 @@ class EmotionalPlasmaGame {
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(5, 10, 7);
         this.scene.add(directionalLight);
+    }
+    
+    addNPCs() {
+        // Anxious NPC
+        const npc1 = new Ball(this.scene, new THREE.Vector3(5, 0.5, 5));
+        npc1.setEmotionalState(-0.8, 0.7, -0.6); // anxious
+        this.entities.push(npc1);
+
+        // Calm NPC
+        const npc2 = new Ball(this.scene, new THREE.Vector3(-5, 0.5, -5));
+        npc2.setEmotionalState(0.7, -0.5, 0.5); // calm
+        this.entities.push(npc2);
     }
     
     setupEventListeners() {

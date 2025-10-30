@@ -3,8 +3,9 @@ import { Ball } from './Ball.js';
 
 export class Player extends Ball {
     constructor(scene) {
-        super(scene, new THREE.Vector3(0, 0, 0), 0.5);
+        super(scene, new THREE.Vector3(0, 0.5, 0), 0.5);
         this.speed = 5;
+        this.isPlayer = true;
         
         // Set initial emotional state (slightly positive, neutral arousal, connected)
         this.emotionalState.valence = 0.3;
@@ -57,7 +58,7 @@ export class Player extends Ball {
         const stateInfo = this.stateMachine.getStateInfo();
         const stateElement = document.getElementById('emotional-state-label');
         if (stateElement) {
-            stateElement.textContent = stateInfo.currentState.toUpperCase();
+            stateElement.textContent = stateInfo.currentState ? stateInfo.currentState.toUpperCase() : 'NEUTRAL';
         }
     }
 }

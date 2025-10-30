@@ -3,7 +3,7 @@ import { EmotionalState } from '../utils/EmotionalState.js';
 import { EmotionalStateMachine } from '../utils/EmotionalStateMachine.js';
 
 export class Ball {
-    constructor(scene, position = new THREE.Vector3(0, 0, 0), size = 0.5) {
+    constructor(scene, position = new THREE.Vector3(0, 0.5, 0), size = 0.5) {
         this.scene = scene;
         this.position = position.clone();
         this.velocity = new THREE.Vector3(0, 0, 0);
