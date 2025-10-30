@@ -231,6 +231,14 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             
             float alpha = noiseAlpha;
 
+            // Billboard-specific enhancement: boost outer region visibility (less occluded by the ball)
+            float rimBoost = smoothstep(0.25, 0.6, dist); // stronger boost further from center
+            float boostFactor = mix(1.2, 1.8, rimBoost); // amplify outer plasma more
+            alpha *= boostFactor;
+
+            // Clamp alpha to reasonable range to avoid extreme brightness
+            alpha = clamp(alpha, 0.0, 1.0);
+
             float emissive = 0.2 + abs(arousal) * 0.3;
             rgbColor = mix(rgbColor, rgbColor * 1.5, emissive);
 
@@ -251,6 +259,8 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
         side: THREE.FrontSide,
         transparent: true,
         depthWrite: false,
-        blending: THREE.AdditiveBlending
+        blending: THREE.AdditiveBlending,
+        // For billboards we want them to remain visible even where the sphere might occlude
+        depthTest: isBillboard ? false : true
     });
 }

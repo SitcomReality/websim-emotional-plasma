@@ -62,6 +62,8 @@ export class Ball {
         this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState, true); // true = billboard mode
         this.plasmaBillboard = new THREE.Mesh(billboardGeometry, this.shaderMaterial);
         this.scene.add(this.plasmaBillboard);
+        // Ensure billboard renders above sphere visuals so outer plasma stays visible
+        this.plasmaBillboard.renderOrder = 999;
 
 
         this.updateMeshPosition();
@@ -147,6 +149,13 @@ export class Ball {
             
             // Billboard logic
             this.plasmaBillboard.quaternion.copy(this.camera.quaternion);
+
+            // Slightly offset the billboard along the camera forward direction so it sits just behind the ball
+            // (helps ensure outer plasma is not swallowed by depth when depthTest is enabled elsewhere)
+            const camDir = new THREE.Vector3();
+            this.camera.getWorldDirection(camDir);
+            // push the billboard a small amount away from the camera (i.e., further into scene)
+            this.plasmaBillboard.position.copy(this.position).addScaledVector(camDir, this.size * 0.12);
         }
     }
 
