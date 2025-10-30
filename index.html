@@ -4,64 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emotional Plasma</title>
-    <link rel="stylesheet" href="styles/base.css">
-    <link rel="stylesheet" href="styles/layout.css">
-    <link rel="stylesheet" href="styles/ui.css">
-    <link rel="stylesheet" href="styles/dialogue.css">
-    <link rel="stylesheet" href="styles/editor.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
-        
-        <!-- Level Editor Panel -->
-        <div id="level-editor-panel" class="level-editor-hidden">
-            <div class="editor-header">
-                <h2>Level Editor</h2>
-                <button id="close-editor-btn" class="editor-close">×</button>
-            </div>
-            
-            <div class="editor-section">
-                <h3>Mode</h3>
-                <div class="editor-buttons">
-                    <button class="editor-btn" data-mode="player">Place Player</button>
-                    <button class="editor-btn" data-mode="npc">Place NPC</button>
-                    <button class="editor-btn" data-mode="zone">Place Zone</button>
-                    <button class="editor-btn" data-mode="prop">Place Prop</button>
-                    <button class="editor-btn" data-mode="select">Select/Edit</button>
-                </div>
-            </div>
-
-            <div class="editor-section">
-                <h3>Properties</h3>
-                <div id="properties-panel">
-                    <p style="color: #aaa; font-size: 12px;">Select an object to edit</p>
-                </div>
-            </div>
-
-            <div class="editor-section">
-                <h3>File</h3>
-                <div class="editor-buttons">
-                    <button class="editor-btn" id="export-level-btn">Export JSON</button>
-                    <button class="editor-btn" id="import-level-btn">Import JSON</button>
-                    <button class="editor-btn" id="clear-level-btn" style="background: #944;">Clear All</button>
-                </div>
-                <textarea id="json-import" placeholder="Paste JSON here" style="display:none;"></textarea>
-                <button class="editor-btn" id="import-confirm-btn" style="display:none; margin-top: 8px;">Confirm Import</button>
-            </div>
-
-            <div class="editor-section">
-                <h3>Info</h3>
-                <div id="editor-info" style="font-size: 11px; color: #888;">
-                    <p>Press <strong>E</strong> to toggle</p>
-                    <p id="object-count">Objects: 0</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Scene Containers -->
-        <div id="menu-scene" class="scene-container"></div>
-        <div id="level-complete-scene" class="scene-container"></div>
         
         <!-- UI Overlay -->
         <div id="ui-overlay">
