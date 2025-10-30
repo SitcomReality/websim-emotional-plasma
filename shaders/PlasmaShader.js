@@ -5,11 +5,11 @@ export const PlasmaConstants = {
     // Alpha/Opacity
     baseAlpha: 0.3,              // Minimum alpha when emotional strength is low
     emotionalAlphaRange: 0.7,    // Additional alpha based on emotional strength (0.3 + 0.7 = 1.0 max)
-    noiseAlphaInfluence: 0.5,    // How much noise pattern affects alpha variation
+    noiseAlphaInfluence: 0.8,    // How much noise pattern affects alpha variation
     
     // Radial falloff
     falloffStart: 0.5,           // Where radial gradient begins (0 = center, 1 = edge)
-    falloffEnd: 0.0,             // Where radial gradient ends
+    falloffEnd: 0.3,             // Where radial gradient ends
     
     // Emissive/Brightness
     baseEmissive: 0.2,           // Base emission intensity
