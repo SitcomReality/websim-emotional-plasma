@@ -6,7 +6,7 @@ export class EmotionalState {
         this.socialConnectedness = 0; // Connected ↔ Isolated
         
         // Decay rates (how fast emotions return to neutral)
-        this.valenceDecay = 0.5;
+        this.valenceDecay = 0.2;
         this.arousalDecay = 0.8;
         this.connectionDecay = 0.3;
     }
