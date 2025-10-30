@@ -61,11 +61,14 @@ function buildBillboardFragment() {
             float timeScale = time * speed;
             vec2 ballSeed = ballWorldPos.xz * 0.1;
 
+            // --- REMOVED RADIAL HIGHLIGHT EFFECT ---
+            // The flow vector logic is being disabled to feature the new tendrils.
             vec2 flowVector = vec2(0.0);
             float totalFlowStrength = 0.0;
             vec2 strongestFlowDirection = vec2(0.0);
             float maxFlowStrength = 0.0;
 
+            /*
             for(int i = 0; i < ${PlasmaConstants.maxInfluencingBalls}; i++) {
                 if(i >= nearbyBallCount) break;
                 vec3 nearbyPos = nearbyBalls[i];
@@ -85,6 +88,7 @@ function buildBillboardFragment() {
                     }
                 }
             }
+            */
 
             if(totalFlowStrength > 0.0) {
                 flowVector = normalize(flowVector) * min(totalFlowStrength, 3.0);

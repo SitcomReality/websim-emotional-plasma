@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createTendrilMaterial } from '../shaders/TendrilShader.js';
 
 class ConnectionTendril {
     constructor(ballA, ballB, scene) {
@@ -12,28 +13,34 @@ class ConnectionTendril {
             this.ballB.position
         ]);
 
-        this.geometry = new THREE.TubeGeometry(curve, 8, 0.05, 8, false);
-        this.material = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.5,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false
-        });
+        this.geometry = new THREE.TubeGeometry(curve, 16, 0.08, 8, false);
+        this.material = createTendrilMaterial();
 
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         this.scene.add(this.mesh);
+        this.connectionStartTime = Date.now();
     }
 
     update() {
-        // Update curve points
-        const points = [this.ballA.position.clone()];
+        // Update uniforms
+        this.material.uniforms.time.value += 0.016; // Approx deltaTime
 
-        // Add a midpoint for some curve
-        const midPoint = new THREE.Vector3().lerpVectors(this.ballA.position, this.ballB.position, 0.5);
-        const wobble = (Math.sin(Date.now() * 0.002) + Math.cos(Date.now() * 0.0015)) * 0.5;
-        midPoint.y += wobble;
-        points.push(midPoint);
+        // Update curve with dynamic wobble
+        const points = [this.ballA.position.clone()];
+        const numMidpoints = 10;
+        
+        for (let i = 0; i < numMidpoints; i++) {
+            const t = i / (numMidpoints + 1);
+            const midPoint = new THREE.Vector3().lerpVectors(this.ballA.position, this.ballB.position, t);
+
+            // Dynamic wobble based on emotional states
+            const wobbleAmount = (Math.abs(this.ballA.emotionalState.arousal) + Math.abs(this.ballB.emotionalState.arousal)) * 0.3;
+            const timeOffset = Date.now() * 0.001 * (1 + i);
+            midPoint.y += (Math.sin(timeOffset) * wobbleAmount);
+            midPoint.x += (Math.cos(timeOffset * 1.3) * wobbleAmount * 0.5);
+
+            points.push(midPoint);
+        }
 
         points.push(this.ballB.position.clone());
 
@@ -41,18 +48,41 @@ class ConnectionTendril {
 
         // Update geometry
         this.mesh.geometry.dispose();
-        this.mesh.geometry = new THREE.TubeGeometry(curve, 8, 0.05, 8, false);
+        this.mesh.geometry = new THREE.TubeGeometry(curve, 16, 0.08, 8, false);
 
         // Update material based on combined emotional state
-        const combinedValence = (this.ballA.emotionalState.valence + this.ballB.emotionalState.valence) / 2;
-        const color = new THREE.Color();
-        const hue = combinedValence > 0
-            ? 30 + (combinedValence * 30)
-            : 240 - (combinedValence * 60);
-        color.setHSL(hue / 360, 0.8, 0.6);
-        this.material.color = color;
+        const colorA = new THREE.Color().setHSL(this.ballA.emotionalState.getColor().h / 360, 0.9, 0.6);
+        const colorB = new THREE.Color().setHSL(this.ballB.emotionalState.getColor().h / 360, 0.9, 0.6);
+        this.material.uniforms.colorA.value = colorA;
+        this.material.uniforms.colorB.value = colorB;
 
-        this.material.opacity = Math.max(0, (this.ballA.emotionalState.socialConnectedness + this.ballB.emotionalState.socialConnectedness) / 2 - 0.5);
+        // Determine interaction type
+        const valenceA = this.ballA.emotionalState.valence;
+        const valenceB = this.ballB.emotionalState.valence;
+        const arousalA = this.ballA.emotionalState.arousal;
+        const arousalB = this.ballB.emotionalState.arousal;
+
+        if (Math.sign(valenceA) === Math.sign(valenceB) && Math.abs(valenceA - valenceB) < 0.8) {
+            this.material.uniforms.interactionType.value = 0.0; // Harmonious
+            this.material.uniforms.turbulence.value = 0.0;
+        } else if (Math.abs(arousalA) > Math.abs(arousalB) + 0.3) {
+            this.material.uniforms.interactionType.value = 1.0; // Draining A->B
+            this.material.uniforms.turbulence.value = 0.5;
+        } else if (Math.abs(arousalB) > Math.abs(arousalA) + 0.3) {
+            // Swap colors for B->A drain
+            this.material.uniforms.colorA.value = colorB;
+            this.material.uniforms.colorB.value = colorA;
+            this.material.uniforms.interactionType.value = 1.0; // Draining B->A
+            this.material.uniforms.turbulence.value = 0.5;
+        } else {
+            this.material.uniforms.interactionType.value = 2.0; // Conflicting
+            this.material.uniforms.turbulence.value = 1.0;
+        }
+
+        // Animate growth
+        const growDuration = 500; // ms
+        const timeSinceCreation = Date.now() - this.connectionStartTime;
+        this.material.uniforms.connectionStrength.value = Math.min(1.0, timeSinceCreation / growDuration);
     }
 
     destroy() {

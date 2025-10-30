@@ -51,3 +51,4 @@ float fbm(vec2 p, float timeOffset) {
 // Also export identifiers for JS-side usage if needed (kept for parity)
 export const snoise = 'snoise';
 export const fbm = 'fbm';
+export { GLSL_SNOISE as snoise_glsl } from './PlasmaNoise.js';
