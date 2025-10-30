@@ -176,15 +176,19 @@ export class Ball {
     }
     
     updateNearbyBalls(allBalls) {
-        // Find nearby balls within interaction range
+        // Find nearby balls within aura overlap range
         this.nearbyBalls = [];
-        const maxDistance = 10; // Maximum distance to consider
+        const auraRadius = this.size * 5.0; // Our aura radius
+        const maxDistance = auraRadius * 2.0; // Check for overlaps within 2x aura radius
         
         for (const otherBall of allBalls) {
             if (otherBall === this) continue;
             
             const distance = this.position.distanceTo(otherBall.position);
-            if (distance < maxDistance) {
+            const otherAuraRadius = otherBall.size * 5.0;
+            
+            // Check if auras overlap or are very close
+            if (distance < (auraRadius + otherAuraRadius)) {
                 this.nearbyBalls.push(otherBall);
             }
         }

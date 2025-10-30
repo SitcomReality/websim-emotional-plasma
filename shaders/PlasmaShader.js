@@ -22,9 +22,10 @@ export const PlasmaConstants = {
     colorSaturation: 0.5,        // Base saturation multiplier
     arousalSaturation: 0.5,      // Additional saturation from arousal
     
-    // Inter-ball flow
-    flowStrength: 0.8,           // How strongly plasma flows toward nearby balls
-    maxInfluencingBalls: 4       // Maximum number of nearby balls to consider
+    // Inter-ball flow - SIGNIFICANTLY INCREASED
+    flowStrength: 2.5,           // Increased from 0.8 to 2.5
+    flowVisualIntensity: 0.8,    // How much to brighten flow regions
+    maxInfluencingBalls: 4
 };
 
 export const PlasmaShader = {
@@ -184,6 +185,7 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
         uniform vec3 nearbyBalls[4];
         uniform int nearbyBallCount;
         uniform float flowStrength;
+        uniform float flowVisualIntensity;
 
         varying vec2 vUv;
         varying vec3 vPosition;
@@ -254,71 +256,85 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             // Unique seed per ball based on world position
             vec2 ballSeed = ballWorldPos.xz * 0.1;
             
-            // Radial coordinate system - emanating from center
-            float radius = dist * 2.0;
-            
-            // Spiral pattern - combines angle and radius
-            float spiral = angle + radius * 3.0;
-            
-            // Multiple noise layers with radial/spiral motion
-            // Layer 1: Outward expansion
-            vec2 radialCoord1 = toCenter * 3.0 + ballSeed;
-            float noise1 = fbm(radialCoord1 - vec2(timeScale * 0.6, 0.0), timeScale + ballSeed.x);
-            
-            // Layer 2: Spiral swirl
-            vec2 spiralCoord = vec2(spiral + timeScale * 0.8, radius * 2.0) + ballSeed;
-            float noise2 = fbm(spiralCoord, timeScale * 1.2 + ballSeed.y);
-            
-            // Layer 3: Turbulent expansion
-            vec2 radialCoord2 = toCenter * 5.0 + vec2(timeScale * 0.4) + ballSeed;
-            float noise3 = fbm(radialCoord2, timeScale * 0.9 + ballSeed.x * 2.0);
-            
-            // Calculate flow toward nearby balls
+            // Calculate flow toward nearby balls - ENHANCED
             vec2 flowVector = vec2(0.0);
             float totalFlowStrength = 0.0;
+            vec2 strongestFlowDirection = vec2(0.0);
+            float maxFlowStrength = 0.0;
             
             for(int i = 0; i < 4; i++) {
                 if(i >= nearbyBallCount) break;
                 
                 vec3 nearbyPos = nearbyBalls[i];
-                // Project nearby ball direction onto billboard plane
                 vec2 toBall = nearbyPos.xz - ballWorldPos.xz;
                 float ballDist = length(toBall);
                 
+                // Check if within aura overlap range (aura radius * 2)
                 if(ballDist > 0.1 && ballDist < 10.0) {
                     vec2 direction = normalize(toBall);
-                    // Stronger pull when closer
-                    float strength = 1.0 - (ballDist / 10.0);
-                    // More pull at edges of billboard
-                    float edgePull = smoothstep(0.2, 0.6, dist);
-                    flowVector += direction * strength * edgePull;
-                    totalFlowStrength += strength * edgePull;
+                    
+                    // Much stronger pull when closer, exponential falloff
+                    float distFactor = 1.0 - (ballDist / 10.0);
+                    float strength = pow(distFactor, 2.0) * 2.0;
+                    
+                    // Stronger pull at edges of billboard where plasma should stream
+                    float edgePull = smoothstep(0.1, 0.5, dist);
+                    
+                    float flowContribution = strength * edgePull;
+                    flowVector += direction * flowContribution;
+                    totalFlowStrength += flowContribution;
+                    
+                    if(flowContribution > maxFlowStrength) {
+                        maxFlowStrength = flowContribution;
+                        strongestFlowDirection = direction;
+                    }
                 }
             }
             
-            // Apply flow to noise coordinates
+            // Normalize flow vector
             if(totalFlowStrength > 0.0) {
-                flowVector = normalize(flowVector) * min(totalFlowStrength, 1.0) * flowStrength;
-                radialCoord1 += flowVector * 2.0;
-                spiralCoord += flowVector * 1.5;
-                
-                // Recalculate noise with flow
-                noise1 = fbm(radialCoord1 - vec2(timeScale * 0.6, 0.0), timeScale + ballSeed.x);
-                noise2 = fbm(spiralCoord, timeScale * 1.2 + ballSeed.y);
+                flowVector = normalize(flowVector) * min(totalFlowStrength, 3.0);
             }
             
-            // Combine noise layers with radial weighting
+            // Base radial coordinates
+            float radius = dist * 2.0;
+            float spiral = angle + radius * 3.0;
+            
+            // Apply flow distortion to coordinates - MUCH STRONGER
+            vec2 flowDistortion = flowVector * flowStrength;
+            
+            // Layer 1: Radial expansion WITH flow
+            vec2 radialCoord1 = toCenter * 3.0 + ballSeed - flowDistortion * 1.5;
+            float noise1 = fbm(radialCoord1 - vec2(timeScale * 0.6, 0.0), timeScale + ballSeed.x);
+            
+            // Layer 2: Spiral WITH strong flow toward other balls
+            vec2 spiralCoord = vec2(spiral + timeScale * 0.8, radius * 2.0) + ballSeed - flowDistortion * 2.0;
+            float noise2 = fbm(spiralCoord, timeScale * 1.2 + ballSeed.y);
+            
+            // Layer 3: Directional streaming toward strongest nearby ball
+            vec2 streamCoord = toCenter * 5.0 + strongestFlowDirection * maxFlowStrength * 3.0 + ballSeed;
+            float noise3 = fbm(streamCoord + vec2(timeScale * 0.4), timeScale * 0.9 + ballSeed.x * 2.0);
+            
+            // Layer 4: Pure flow layer - stretches noise along flow direction
+            float flowLayerStrength = min(totalFlowStrength, 1.0);
+            vec2 flowLayerCoord = vUv * 4.0 + flowVector * 0.5;
+            float flowNoise = fbm(flowLayerCoord, timeScale * 1.5) * flowLayerStrength;
+            
+            // Combine noise layers with flow emphasis
             float centerWeight = 1.0 - smoothstep(0.0, 0.5, dist);
             float edgeWeight = smoothstep(0.3, 0.8, dist);
+            float flowWeight = totalFlowStrength * edgeWeight;
             
             float plasmaPattern = 
-                noise1 * 0.4 * (1.0 + centerWeight * 0.5) +
-                noise2 * 0.35 * (1.0 + edgeWeight * 0.3) +
-                noise3 * 0.25;
+                noise1 * 0.3 * (1.0 + centerWeight * 0.3) +
+                noise2 * 0.3 * (1.0 + edgeWeight * 0.2) +
+                noise3 * 0.25 +
+                flowNoise * 0.15;
             
-            // Enhanced flow regions
-            if(totalFlowStrength > 0.2) {
-                plasmaPattern += totalFlowStrength * 0.3;
+            // Add directional streaks in flow regions
+            if(totalFlowStrength > 0.3) {
+                float streakIntensity = totalFlowStrength * edgeWeight;
+                plasmaPattern += streakIntensity * 0.4;
             }
 
             // Color based on emotional state
@@ -350,9 +366,11 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             // Add noise-based variation
             float noiseAlpha = mix(plasmaAlpha, plasmaAlpha * (plasmaPattern + 1.0) * 0.5, noiseAlphaInfluence);
             
-            // Brighten flow regions
-            if(totalFlowStrength > 0.1) {
-                noiseAlpha += totalFlowStrength * 0.2 * radialFalloff;
+            // SIGNIFICANTLY brighten and intensify flow regions
+            if(totalFlowStrength > 0.2) {
+                float flowBoost = pow(totalFlowStrength, 1.5) * flowVisualIntensity;
+                noiseAlpha += flowBoost * radialFalloff;
+                rgbColor *= 1.0 + flowBoost * 1.5; // Much brighter in flow regions
             }
             
             float alpha = noiseAlpha * plasmaIntensity;
@@ -361,9 +379,10 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
             float emissive = baseEmissive + abs(arousal) * arousalEmissiveRange;
             rgbColor = mix(rgbColor, rgbColor * 1.8, emissive);
             
-            // Extra brightness in flow regions
-            if(totalFlowStrength > 0.15) {
-                rgbColor *= 1.0 + totalFlowStrength * 0.4;
+            // Extra glow in strong flow regions
+            if(totalFlowStrength > 0.3) {
+                float glowBoost = pow(totalFlowStrength, 2.0);
+                rgbColor *= 1.0 + glowBoost * 0.8;
             }
 
             gl_FragColor = vec4(rgbColor, alpha);
@@ -399,6 +418,7 @@ export function createPlasmaShaderMaterial(emotionalState, isBillboard = false) 
         ]};
         uniforms.nearbyBallCount = { value: 0 };
         uniforms.flowStrength = { value: PlasmaConstants.flowStrength };
+        uniforms.flowVisualIntensity = { value: PlasmaConstants.flowVisualIntensity };
     }
 
     return new THREE.ShaderMaterial({
