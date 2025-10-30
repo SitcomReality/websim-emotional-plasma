@@ -3,6 +3,7 @@ import { GameEngine } from './engine/GameEngine.js';
 import { Player } from './entities/Player.js';
 import { InputManager } from './utils/InputManager.js';
 import { Ball } from './entities/Ball.js';
+import { NPCBehavior } from './utils/NPCBehavior.js';
 
 class EmotionalPlasmaGame {
     constructor() {
@@ -70,11 +71,15 @@ class EmotionalPlasmaGame {
         // Anxious NPC
         const npc1 = new Ball(this.scene, new THREE.Vector3(5, 0.5, 5));
         npc1.setEmotionalState(-0.8, 0.7, -0.6); // anxious
+        npc1.isNPC = true;
+        npc1.behavior = new NPCBehavior();
         this.entities.push(npc1);
 
         // Calm NPC
         const npc2 = new Ball(this.scene, new THREE.Vector3(-5, 0.5, -5));
         npc2.setEmotionalState(0.7, -0.5, 0.5); // calm
+        npc2.isNPC = true;
+        npc2.behavior = new NPCBehavior();
         this.entities.push(npc2);
     }
     
@@ -96,4 +101,3 @@ class EmotionalPlasmaGame {
 // Initialize and start the game
 const game = new EmotionalPlasmaGame();
 game.start();
-

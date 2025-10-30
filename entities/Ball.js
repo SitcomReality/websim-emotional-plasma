@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { EmotionalState } from '../utils/EmotionalState.js';
 import { EmotionalStateMachine } from '../utils/EmotionalStateMachine.js';
+import { NPCBehavior } from '../utils/NPCBehavior.js';
 
 export class Ball {
     constructor(scene, position = new THREE.Vector3(0, 0.5, 0), size = 0.5) {
@@ -21,6 +22,10 @@ export class Ball {
 
         this.mesh = null;
         this.createMesh();
+        
+        // AI behavior (for NPCs)
+        this.isNPC = false;
+        this.behavior = null;
     }
 
     createMesh() {
@@ -46,6 +51,12 @@ export class Ball {
         
         // Update state machine
         this.stateMachine.update(deltaTime);
+
+        // Update NPC behavior if applicable
+        if (this.isNPC && this.behavior) {
+            this.behavior.update(this, deltaTime);
+            this.updatePhysics(deltaTime);
+        }
 
         // Update mesh
         this.updateMeshPosition();
