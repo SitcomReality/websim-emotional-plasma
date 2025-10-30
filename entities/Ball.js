@@ -5,8 +5,9 @@ import { NPCBehavior } from '../utils/NPCBehavior.js';
 import { createPlasmaShaderMaterial } from '../shaders/PlasmaShader.js';
 
 export class Ball {
-    constructor(scene, position = new THREE.Vector3(0, 0.5, 0), size = 0.5) {
+    constructor(scene, camera, position = new THREE.Vector3(0, 0.5, 0), size = 0.5) {
         this.scene = scene;
+        this.camera = camera;
         this.position = position.clone();
         this.velocity = new THREE.Vector3(0, 0, 0);
         this.acceleration = new THREE.Vector3(0, 0, 0);
@@ -22,7 +23,8 @@ export class Ball {
         this.friction = 0.85;
 
         this.mesh = null;
-        this.auraMesh = null;
+        this.auraMesh = null; // This will now be an invisible hitbox
+        this.plasmaBillboard = null;
         this.shaderMaterial = null;
         this.createMesh();
         
@@ -33,24 +35,30 @@ export class Ball {
 
     createMesh() {
         const geometry = new THREE.SphereGeometry(this.size, 32, 32);
-        this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState);
-
-        this.mesh = new THREE.Mesh(geometry, this.shaderMaterial);
+        const material = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            metalness: 0.2,
+            roughness: 0.1
+        });
+        this.mesh = new THREE.Mesh(geometry, material);
         this.mesh.castShadow = true;
         this.mesh.receiveShadow = true;
         this.scene.add(this.mesh);
         
-        // Aura mesh
+        // Aura mesh (now an invisible hitbox)
         const auraGeometry = new THREE.SphereGeometry(this.size * 2.5, 32, 32);
         const auraMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            transparent: true,
-            opacity: 0.1,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
+            visible: false
         });
         this.auraMesh = new THREE.Mesh(auraGeometry, auraMaterial);
         this.scene.add(this.auraMesh);
+
+        // Plasma billboard
+        const plasmaSize = this.size * 2.5 * 2; // Diameter of aura
+        const billboardGeometry = new THREE.PlaneGeometry(plasmaSize, plasmaSize);
+        this.shaderMaterial = createPlasmaShaderMaterial(this.emotionalState);
+        this.plasmaBillboard = new THREE.Mesh(billboardGeometry, this.shaderMaterial);
+        this.scene.add(this.plasmaBillboard);
 
 
         this.updateMeshPosition();
@@ -72,7 +80,7 @@ export class Ball {
         // Update mesh
         this.updateMeshPosition();
         this.updateShaderUniforms(deltaTime);
-        this.updateAura(deltaTime);
+        this.updateAuraAndBillboard(deltaTime);
     }
 
     applyForce(force) {
@@ -99,6 +107,9 @@ export class Ball {
         if (this.auraMesh) {
             this.auraMesh.position.copy(this.position);
         }
+        if (this.plasmaBillboard) {
+            this.plasmaBillboard.position.copy(this.position);
+        }
     }
 
     updateShaderUniforms(deltaTime) {
@@ -110,24 +121,20 @@ export class Ball {
         }
     }
 
-    updateAura(deltaTime) {
-        if (this.auraMesh) {
-            const emotionalColor = this.emotionalState.getColor();
-            const color = new THREE.Color();
-            color.setHSL(emotionalColor.h / 360, emotionalColor.s / 100, 0.7);
-            
-            this.auraMesh.material.color = color;
-
-            const baseOpacity = 0.05;
-            const arousalBonus = Math.abs(this.emotionalState.arousal) * 0.1;
-            const connectednessBonus = Math.max(0, this.emotionalState.socialConnectedness) * 0.2;
-            this.auraMesh.material.opacity = baseOpacity + arousalBonus + connectednessBonus;
-
+    updateAuraAndBillboard(deltaTime) {
+        if (this.auraMesh && this.plasmaBillboard) {
             const baseScale = 2.5;
             const connectednessScale = Math.max(0, this.emotionalState.socialConnectedness) * 1.5;
             const arousalScale = Math.abs(this.emotionalState.arousal) * 0.5;
             const newScale = baseScale + connectednessScale + arousalScale;
-            this.auraMesh.scale.set(newScale, newScale, newScale);
+
+            const finalScale = newScale / 2.5; // Plane scale is relative to its geometry size
+            
+            this.auraMesh.scale.set(finalScale, finalScale, finalScale);
+            this.plasmaBillboard.scale.set(finalScale, finalScale, finalScale);
+            
+            // Billboard logic
+            this.plasmaBillboard.quaternion.copy(this.camera.quaternion);
         }
     }
 

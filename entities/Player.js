@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { Ball } from './Ball.js';
 
 export class Player extends Ball {
-    constructor(scene) {
-        super(scene, new THREE.Vector3(0, 0.5, 0), 0.5);
+    constructor(scene, camera) {
+        super(scene, camera, new THREE.Vector3(0, 0.5, 0), 0.5);
         this.speed = 5;
         this.isPlayer = true;
         

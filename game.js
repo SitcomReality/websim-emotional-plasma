@@ -17,7 +17,7 @@ class EmotionalPlasmaGame {
         this.initLights();
         
         this.inputManager = new InputManager();
-        this.player = new Player(this.scene);
+        this.player = new Player(this.scene, this.camera);
         this.entities = [this.player];
         
         this.zoneManager = new ZoneManager(this.scene);
@@ -139,14 +139,14 @@ class EmotionalPlasmaGame {
     
     addNPCs() {
         // Anxious NPC
-        const npc1 = new Ball(this.scene, new THREE.Vector3(5, 0.5, 5));
+        const npc1 = new Ball(this.scene, this.camera, new THREE.Vector3(5, 0.5, 5));
         npc1.setEmotionalState(-0.8, 0.7, -0.6); // anxious
         npc1.isNPC = true;
         npc1.behavior = new NPCBehavior();
         this.entities.push(npc1);
 
         // Calm NPC
-        const npc2 = new Ball(this.scene, new THREE.Vector3(-5, 0.5, -5));
+        const npc2 = new Ball(this.scene, this.camera, new THREE.Vector3(-5, 0.5, -5));
         npc2.setEmotionalState(0.7, -0.5, 0.5); // calm
         npc2.isNPC = true;
         npc2.behavior = new NPCBehavior();

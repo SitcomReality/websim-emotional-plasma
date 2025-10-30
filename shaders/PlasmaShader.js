@@ -116,16 +116,20 @@ export const PlasmaShader = {
             vec3 hslColor = vec3(hue, saturation, lightness);
             vec3 rgbColor = hsl2rgb(hslColor);
 
-            // Edge glow based on normal
-            float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
-            float glowIntensity = 0.3 + abs(arousal) * 0.5;
-            rgbColor += fresnel * glowIntensity;
+            // Edge glow based on normal - this is less effective on a flat plane
+            // float fresnel = pow(1.0 - abs(dot(vNormal, vec3(0.0, 0.0, 1.0))), 2.0);
+            // float glowIntensity = 0.3 + abs(arousal) * 0.5;
+            // rgbColor += fresnel * glowIntensity;
+
+            // Make the circle soft at the edges
+            float dist = distance(vUv, vec2(0.5));
+            float alpha = 1.0 - smoothstep(0.4, 0.5, dist);
 
             // Add emissive quality
             float emissive = 0.2 + abs(arousal) * 0.3;
             rgbColor = mix(rgbColor, rgbColor * 1.5, emissive);
 
-            gl_FragColor = vec4(rgbColor, 1.0);
+            gl_FragColor = vec4(rgbColor, alpha);
         }
     `
 };
@@ -141,6 +145,9 @@ export function createPlasmaShaderMaterial(emotionalState) {
             connectedness: { value: emotionalState.socialConnectedness },
             baseColor: { value: new THREE.Color(0xffffff) }
         },
-        side: THREE.FrontSide
+        side: THREE.FrontSide,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
     });
 }
