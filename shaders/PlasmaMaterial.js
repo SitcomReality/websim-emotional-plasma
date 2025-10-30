@@ -96,15 +96,18 @@ function buildBillboardFragment() {
 
             float radius = dist * 2.0;
             float spiral = angle + radius * 3.0;
-            vec2 flowDistortion = flowVector * flowStrength;
+            // Invert sign so distortion pushes noise outward from the ball
+            vec2 flowDistortion = -flowVector * flowStrength;
 
-            vec2 radialCoord1 = toCenter * 3.0 + ballSeed - flowDistortion * 1.5;
+            // Apply outward distortion (add flowDistortion) so patterns emanate from center
+            vec2 radialCoord1 = toCenter * 3.0 + ballSeed + flowDistortion * 1.5;
             float noise1 = fbm(radialCoord1 - vec2(timeScale * 0.6, 0.0), timeScale + ballSeed.x);
 
-            vec2 spiralCoord = vec2(spiral + timeScale * 0.8, radius * 2.0) + ballSeed - flowDistortion * 2.0;
+            vec2 spiralCoord = vec2(spiral + timeScale * 0.8, radius * 2.0) + ballSeed + flowDistortion * 2.0;
             float noise2 = fbm(spiralCoord, timeScale * 1.2 + ballSeed.y);
 
-            vec2 streamCoord = toCenter * 5.0 + strongestFlowDirection * maxFlowStrength * 3.0 + ballSeed;
+            // Reverse strongestFlowDirection contribution so visible streamlines move outward
+            vec2 streamCoord = toCenter * 5.0 - strongestFlowDirection * maxFlowStrength * 3.0 + ballSeed;
             float noise3 = fbm(streamCoord + vec2(timeScale * 0.4), timeScale * 0.9 + ballSeed.x * 2.0);
 
             float flowLayerStrength = min(totalFlowStrength, 1.0);
