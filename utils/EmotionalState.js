@@ -98,16 +98,32 @@ export class EmotionalState {
     }
     
     getColor() {
-        // Map emotional state to color
-        // Positive valence: warm colors (yellow-orange)
-        // Negative valence: cool colors (blue-purple)
-        const hue = this.valence > 0 
-            ? 30 + (this.valence * 30)  // 30-60 (yellow-orange)
-            : 240 - (this.valence * 60); // 180-240 (cyan-blue)
-        
-        const saturation = 50 + (Math.abs(this.arousal) * 50);
-        const lightness = 50 + (this.socialConnectedness * 20);
-        
-        return { h: hue, s: saturation, l: lightness };
+        // Smoothly map emotional state to HSL color to avoid abrupt switches.
+        // Hue: interpolate from blue (~240) at valence=-1 through neutral (~120) at valence=0 to warm (~45) at valence=+1.
+        // This creates a continuous gradient across the valence axis.
+        const hueNegative = 240; // cool
+        const hueNeutral = 120;  // neutral midpoint (teal/greenish)
+        const huePositive = 45;  // warm
+
+        let hue;
+        if (this.valence < 0) {
+            const t = (this.valence + 1) / 1.0; // map [-1,0) -> [0,1)
+            // interpolate from hueNegative -> hueNeutral
+            hue = hueNegative * (1 - t) + hueNeutral * t;
+        } else {
+            const t = this.valence / 1.0; // map [0,1] -> [0,1]
+            // interpolate from hueNeutral -> huePositive
+            hue = hueNeutral * (1 - t) + huePositive * t;
+        }
+
+        // Saturation increases with absolute arousal for more vivid colors when energized
+        const baseSaturation = 40;
+        const sat = baseSaturation + Math.min(60, Math.abs(this.arousal) * 60);
+
+        // Lightness adjusted by social connectedness for perceived warmth/brightness
+        const baseLightness = 45;
+        const light = baseLightness + (this.socialConnectedness * 20);
+
+        return { h: hue, s: sat, l: light };
     }
 }
