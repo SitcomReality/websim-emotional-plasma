@@ -1,9 +1,7 @@
-import * as THREE from 'three';
 import { LevelEditorUI } from './LevelEditorUI.js';
-import { LevelEditorPlacement } from './LevelEditorPlacement.js';
-import { LevelEditorSelection } from './LevelEditorSelection.js';
-import { LevelEditorExport } from './LevelEditorExport.js';
-import { LevelEditorImport } from './LevelEditorImport.js';
+import { LevelEditorInput } from './LevelEditorInput.js';
+import { LevelEditorObjectManager } from './LevelEditorObjectManager.js';
+import { LevelEditorSerializer } from './LevelEditorSerializer.js';
 
 export class LevelEditor {
     constructor(scene, camera, renderer) {
@@ -21,70 +19,45 @@ export class LevelEditor {
             props: []
         };
 
-        this.raycaster = new THREE.Raycaster();
-        this.mouse = new THREE.Vector2();
-        this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-        this.groundPoint = new THREE.Vector3();
-
-        // Initialize sub-modules
         this.ui = new LevelEditorUI(this);
-        this.placement = new LevelEditorPlacement(this);
-        this.selection = new LevelEditorSelection(this);
-        this.export = new LevelEditorExport(this);
-        this.import = new LevelEditorImport(this);
+        this.input = new LevelEditorInput(this, renderer);
+        this.objectManager = new LevelEditorObjectManager(this);
+        this.serializer = new LevelEditorSerializer(this);
 
-        this.setupInputListeners();
-    }
-
-    setupInputListeners() {
-        // Toggle editor with 'E'
-        window.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'e' && !e.ctrlKey) {
-                this.toggle();
-            }
-        });
-
-        // Canvas click for placement/selection
-        this.renderer.domElement.addEventListener('click', (e) => this.onCanvasClick(e));
-
-        // Mouse move for raycasting
-        this.renderer.domElement.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.ui.setupCloseButton();
     }
 
     toggle() {
         this.isActive = !this.isActive;
-        this.ui.togglePanel();
-    }
-
-    onCanvasClick(e) {
-        if (!this.isActive || !this.mode) return;
-
-        // Calculate mouse position
-        const rect = this.renderer.domElement.getBoundingClientRect();
-        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-
-        // Raycast to ground
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-        const target = new THREE.Vector3();
-        this.raycaster.ray.intersectPlane(this.groundPlane, target);
-        target.y = 0.5; // Place at ground level
-
-        if (this.mode === 'select') {
-            this.selection.selectObject(target);
-        } else {
-            this.placement.placeObject(target, this.mode);
+        const panel = document.getElementById('level-editor-panel');
+        if (panel) {
+            panel.classList.toggle('level-editor-hidden');
         }
-
-        this.ui.update();
     }
 
-    onMouseMove(e) {
-        if (!this.isActive) return;
+    updateBallPosition(axis, value) {
+        this.objectManager.updateBallPosition(axis, value);
+    }
 
-        const rect = this.renderer.domElement.getBoundingClientRect();
-        this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    updateBallState(state, value) {
+        this.objectManager.updateBallState(state, value);
+        this.ui.updatePropertiesPanel(this.selectedObject);
+    }
+
+    updateZoneType(type) {
+        this.objectManager.updateZoneType(type);
+    }
+
+    updateZoneRadius(value) {
+        this.objectManager.updateZoneRadius(value);
+    }
+
+    updatePropScale(axis, value) {
+        this.objectManager.updatePropScale(axis, value);
+    }
+
+    deleteSelectedObject() {
+        this.objectManager.deleteSelectedObject();
     }
 
     getExportData() {
@@ -96,3 +69,4 @@ export class LevelEditor {
         };
     }
 }
+
