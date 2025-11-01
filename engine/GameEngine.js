@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 export class GameEngine {
-    constructor(renderer, scene, camera, player, entities, inputManager, zoneManager, connectionManager) {
+    constructor(renderer, scene, camera, player, entities, inputManager, zoneManager, connectionManager, dialogueManager) {
         this.renderer = renderer;
         this.scene = scene;
         this.camera = camera;
@@ -10,6 +10,7 @@ export class GameEngine {
         this.inputManager = inputManager;
         this.zoneManager = zoneManager;
         this.connectionManager = connectionManager;
+        this.dialogueManager = dialogueManager;
         
         this.clock = new THREE.Clock();
         this.isRunning = false;
@@ -61,6 +62,11 @@ export class GameEngine {
         // Update connection visuals
         if (this.connectionManager) {
             this.connectionManager.update(this.entities, this.camera);
+        }
+
+        // Update dialogue bubbles
+        if (this.dialogueManager) {
+            this.dialogueManager.update();
         }
 
         // Update camera to follow player

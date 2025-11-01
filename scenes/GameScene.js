@@ -7,6 +7,7 @@ import { NPCBehavior } from '../utils/NPCBehavior.js';
 import { ZoneManager } from '../utils/ZoneManager.js';
 import { ConnectionManager } from '../visuals/ConnectionManager.js';
 import { LevelLoader } from '../levels/LevelLoader.js';
+import { DialogueManager } from '../dialogue/DialogueManager.js';
 
 export class GameScene {
     constructor(renderer, scene, camera, onLevelComplete) {
@@ -20,6 +21,7 @@ export class GameScene {
         this.entities = [];
         this.zoneManager = null;
         this.connectionManager = null;
+        this.dialogueManager = null;
         this.engine = null;
         this.currentLevelPath = null;
     }
@@ -49,8 +51,11 @@ export class GameScene {
             this.zoneManager = new ZoneManager(this.scene);
             zones.forEach(zone => this.zoneManager.addZone(zone));
 
+            // Initialize Dialogue Manager
+            this.dialogueManager = new DialogueManager(this.scene, this.camera);
+
             // Initialize Connection Manager
-            this.connectionManager = new ConnectionManager(this.scene);
+            this.connectionManager = new ConnectionManager(this.scene, this.dialogueManager);
 
             // Setup Engine
             this.engine = new GameEngine(
@@ -61,7 +66,8 @@ export class GameScene {
                 this.entities,
                 this.inputManager,
                 this.zoneManager,
-                this.connectionManager
+                this.connectionManager,
+                this.dialogueManager
             );
 
             return true;
@@ -104,6 +110,11 @@ export class GameScene {
         // Clean up zones
         if (this.zoneManager) {
             this.zoneManager.clear();
+        }
+
+        // Clean up dialogue
+        if (this.dialogueManager) {
+            this.dialogueManager.clear();
         }
 
         this.entities = [];

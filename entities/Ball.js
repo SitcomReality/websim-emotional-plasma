@@ -33,6 +33,10 @@ export class Ball {
         this.isNPC = false;
         this.behavior = null;
         
+        // Dialogue properties
+        this.lastDialogueTime = 0;
+        this.dialogueCooldown = 3000; // 3 seconds
+        
         // Nearby balls for plasma interaction
         this.nearbyBalls = [];
     }

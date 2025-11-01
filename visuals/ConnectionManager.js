@@ -130,8 +130,9 @@ class ConnectionTendril {
 }
 
 export class ConnectionManager {
-    constructor(scene, config = TendrilConstants) {
+    constructor(scene, dialogueManager, config = TendrilConstants) {
         this.scene = scene;
+        this.dialogueManager = dialogueManager;
         this.config = config;
         this.connections = new Map(); // Use a map to store connections, key is pair of IDs
     }
@@ -164,6 +165,7 @@ export class ConnectionManager {
                         // Create new connection
                         const tendril = new ConnectionTendril(ballA, ballB, this.scene, this.config);
                         this.connections.set(key, tendril);
+                        this.triggerConnectionDialogue(ballA, ballB, "hello");
                     } else {
                         // Update existing connection
                         this.connections.get(key).update(camera);
@@ -175,9 +177,26 @@ export class ConnectionManager {
         // Clean up old/inactive connections
         for (const [key, connection] of this.connections.entries()) {
             if (!activeKeys.has(key)) {
+                this.triggerConnectionDialogue(connection.ballA, connection.ballB, "goodbye");
                 connection.destroy();
                 this.connections.delete(key);
             }
+        }
+    }
+
+    triggerConnectionDialogue(ballA, ballB, text) {
+        if (!this.dialogueManager) return;
+
+        const now = Date.now();
+        
+        if (ballA.isNPC && now - ballA.lastDialogueTime > ballA.dialogueCooldown) {
+            this.dialogueManager.say(ballA, text);
+            ballA.lastDialogueTime = now;
+        }
+
+        if (ballB.isNPC && now - ballB.lastDialogueTime > ballB.dialogueCooldown) {
+            this.dialogueManager.say(ballB, text);
+            ballB.lastDialogueTime = now;
         }
     }
 }
