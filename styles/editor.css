@@ -139,3 +139,120 @@
     line-height: 1.4;
 }
 
+.dialogue-editor-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+}
+
+.dialogue-editor-panel {
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 20px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.dialogue-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 12px;
+}
+
+.dialogue-editor-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.dialogue-editor-header h4 {
+    font-size: 12px;
+    margin: 12px 0 8px 0;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.dialogue-editor-content {
+    display: flex;
+    gap: 16px;
+}
+
+.dialogue-node-list {
+    flex: 0 0 40%;
+    border-right: 1px solid #333;
+    padding-right: 12px;
+}
+
+.dialogue-node-item {
+    background: #222;
+    border: 1px solid #333;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+}
+
+.dialogue-node-item:hover {
+    background: #2a2a2a;
+    border-color: #444;
+}
+
+.dialogue-response-item,
+.dialogue-effect-item {
+    background: #222;
+    border: 1px solid #333;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    gap: 8px;
+}
+
+.dialogue-response-item:hover,
+.dialogue-effect-item:hover {
+    background: #2a2a2a;
+    border-color: #444;
+}
+
+.dialogue-editor-content h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #aaa;
+    margin: 12px 0 8px 0;
+}
