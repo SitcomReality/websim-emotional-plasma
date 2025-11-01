@@ -9,8 +9,9 @@ class ConnectionTendril {
         this.scene = scene;
         this.config = config;
         this.isActive = true;
+        this.distance = this.ballA.position.distanceTo(this.ballB.position);
 
-        const distance = this.ballA.position.distanceTo(this.ballB.position);
+        const distance = this.distance;
         this.geometry = new THREE.PlaneGeometry(this.config.tendrilWidth, 1, 1, 1);
 
         this.material = createTendrilMaterial();
@@ -38,6 +39,9 @@ class ConnectionTendril {
             this.material.uniforms.peakSoftness.value = 0.18;
         }
 
+        // Distance-based strength: stronger when closer
+        this.material.uniforms.distanceStrength.value = 1.0;
+
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         // Ensure the plane does not occlude and sits as an additive transparent layer
         this.mesh.renderOrder = 1;
@@ -57,8 +61,8 @@ class ConnectionTendril {
         this.mesh.position.copy(midpoint);
 
         // 2. Scale to match distance
-        const distance = posA.distanceTo(posB);
-        this.mesh.scale.set(this.config.tendrilWidth, distance, 1);
+        this.distance = posA.distanceTo(posB);
+        this.mesh.scale.set(this.config.tendrilWidth, this.distance, 1);
 
         // 3. Orient to face camera and align with balls
         const up = new THREE.Vector3(0, 1, 0);
@@ -68,6 +72,10 @@ class ConnectionTendril {
         this.mesh.up.copy(direction);
         this.mesh.lookAt(this.mesh.position.clone().add(lookAt));
 
+        // Distance-based strength: closer = stronger
+        const maxDistance = 10.0; // Match connectionDistance in ConnectionManager
+        const distanceRatio = Math.max(0, 1.0 - (this.distance / maxDistance));
+        this.material.uniforms.distanceStrength.value = distanceRatio;
 
         // Update material based on combined emotional state
         const colorA = new THREE.Color().setHSL(this.ballA.emotionalState.getColor().h / 360, 0.9, 0.6);
@@ -128,7 +136,6 @@ export class ConnectionManager {
         const checkedPairs = new Set();
         const activeKeys = new Set();
 
-        const connectionThreshold = this.config.connectionThreshold;
         const connectionDistance = this.config.connectionDistance;
 
         for (let i = 0; i < entities.length; i++) {
@@ -138,10 +145,8 @@ export class ConnectionManager {
                 const key = this.getKey(ballA, ballB);
                 checkedPairs.add(key);
 
-                const canConnect =
-                    ballA.emotionalState.socialConnectedness > connectionThreshold &&
-                    ballB.emotionalState.socialConnectedness > connectionThreshold &&
-                    ballA.position.distanceTo(ballB.position) < connectionDistance;
+                const distance = ballA.position.distanceTo(ballB.position);
+                const canConnect = distance < connectionDistance;
 
                 if (canConnect) {
                     activeKeys.add(key);

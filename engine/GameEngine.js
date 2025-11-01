@@ -68,43 +68,49 @@ export class GameEngine {
     }
 
     handleInteractions(deltaTime) {
+        const connectionDistance = 10.0; // Match ConnectionManager config
+        
         for (let i = 0; i < this.entities.length; i++) {
             for (let j = i + 1; j < this.entities.length; j++) {
                 const ballA = this.entities[i];
                 const ballB = this.entities[j];
 
                 const distance = ballA.position.distanceTo(ballB.position);
-                const interactionDistance = ballA.size + ballB.size + 3; // Aura range
-
-                if (distance < interactionDistance) {
-                    this.processInteraction(ballA, ballB, deltaTime);
+                
+                // Only process interactions for connected balls
+                if (distance < connectionDistance) {
+                    // Scale interaction rate by proximity: closer = stronger effect
+                    const distanceRatio = Math.max(0, 1.0 - (distance / connectionDistance));
+                    this.processInteraction(ballA, ballB, deltaTime, distanceRatio);
                 }
             }
         }
     }
 
-    processInteraction(ballA, ballB, deltaTime) {
+    processInteraction(ballA, ballB, deltaTime, distanceRatio) {
         const stateA = ballA.stateMachine.currentState;
         const stateB = ballB.stateMachine.currentState;
 
-        const interactionRate = 0.5 * deltaTime; // Base rate of emotional change
+        const baseInteractionRate = 0.5 * deltaTime;
+        // Closer balls exchange emotions faster
+        const interactionRate = baseInteractionRate * distanceRatio;
 
         const interactions = {
             'anxious-calm': () => {
-                ballA.emotionalState.modify(0.1, -0.2, 0); // anxious -> calmer
-                ballB.emotionalState.modify(-0.05, 0.1, 0); // calm -> slightly disturbed
+                ballA.emotionalState.modify(0.1 * distanceRatio, -0.2 * distanceRatio, 0);
+                ballB.emotionalState.modify(-0.05 * distanceRatio, 0.1 * distanceRatio, 0);
             },
             'depressed-joyous': () => {
-                ballA.emotionalState.modify(0.2, 0.1, 0.1); // depressed -> uplifted
-                ballB.emotionalState.modify(-0.1, -0.05, -0.05); // joyous -> drained
+                ballA.emotionalState.modify(0.2 * distanceRatio, 0.1 * distanceRatio, 0.1 * distanceRatio);
+                ballB.emotionalState.modify(-0.1 * distanceRatio, -0.05 * distanceRatio, -0.05 * distanceRatio);
             },
             'agitated-anxious': () => {
-                ballA.emotionalState.modify(-0.1, 0.1, 0); // agitated -> more negative
-                ballB.emotionalState.modify(-0.1, 0.1, 0); // anxious -> more negative
+                ballA.emotionalState.modify(-0.1 * distanceRatio, 0.1 * distanceRatio, 0);
+                ballB.emotionalState.modify(-0.1 * distanceRatio, 0.1 * distanceRatio, 0);
             },
             'joyous-joyous': () => {
-                ballA.emotionalState.modify(0.1, 0.05, 0.1); // mutually reinforcing joy
-                ballB.emotionalState.modify(0.1, 0.05, 0.1);
+                ballA.emotionalState.modify(0.1 * distanceRatio, 0.05 * distanceRatio, 0.1 * distanceRatio);
+                ballB.emotionalState.modify(0.1 * distanceRatio, 0.05 * distanceRatio, 0.1 * distanceRatio);
             }
         };
 
@@ -114,16 +120,12 @@ export class GameEngine {
         if (interactions[key1]) {
             interactions[key1]();
         } else if (interactions[key2]) {
-            // Swap ball references for the mirrored case
-            const tempInteraction = interactions[key2];
-            const swappedInteraction = () => tempInteraction(ballB, ballA);
-            swappedInteraction();
-             if (key2 === 'anxious-calm') {
-                ballB.emotionalState.modify(0.1, -0.2, 0); 
-                ballA.emotionalState.modify(-0.05, 0.1, 0);
+            if (key2 === 'anxious-calm') {
+                ballB.emotionalState.modify(0.1 * distanceRatio, -0.2 * distanceRatio, 0);
+                ballA.emotionalState.modify(-0.05 * distanceRatio, 0.1 * distanceRatio, 0);
             } else if (key2 === 'depressed-joyous') {
-                ballB.emotionalState.modify(0.2, 0.1, 0.1);
-                ballA.emotionalState.modify(-0.1, -0.05, -0.05);
+                ballB.emotionalState.modify(0.2 * distanceRatio, 0.1 * distanceRatio, 0.1 * distanceRatio);
+                ballA.emotionalState.modify(-0.1 * distanceRatio, -0.05 * distanceRatio, -0.05 * distanceRatio);
             }
         }
     }

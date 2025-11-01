@@ -30,6 +30,7 @@ export const TendrilShader = {
         uniform float interactionType; // 0: harmonious, 1: draining A->B, 2: conflicting
         uniform float connectionStrength; // 0 to 1 for growth
         uniform float turbulence;
+        uniform float distanceStrength; // 0 to 1 based on proximity (1 = closest, 0 = farthest)
         
         // Tunable constants exposed as uniforms
         uniform float flowSpeed;
@@ -88,6 +89,9 @@ export const TendrilShader = {
             float ambient = baseOpacity * 0.5;
             float alpha = max(ambient * connectionStrength, peakAlpha * centerPeakOpacity * connectionStrength);
 
+            // Distance strength modulates the overall opacity: closer = stronger
+            alpha *= mix(0.2, 1.0, distanceStrength);
+
             // Color blending based on interaction type
             vec3 finalColor;
             if (interactionType < 0.5) { // Harmonious
@@ -128,6 +132,7 @@ export function createTendrilMaterial() {
             interactionType: { value: 0.0 }, // 0: harmonious, 1: draining, 2: conflicting
             connectionStrength: { value: 0.0 },
             turbulence: { value: 0.0 },
+            distanceStrength: { value: 1.0 },
             // Tunable uniforms
             flowSpeed: { value: 1.5 },
             baseOpacity: { value: 0.03 },
