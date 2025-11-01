@@ -49,7 +49,7 @@ export class LevelEditorUI {
             return;
         }
 
-        let html = '<div class="property-panel>';
+        let html = '<div class="property-panel">';
         html += this.buildPropertyHTML(selectedObject);
         html += '</div>';
         panel.innerHTML = html;
@@ -145,4 +145,3 @@ export class LevelEditorUI {
         return (objects.player ? 1 : 0) + objects.npcs.length + objects.zones.length + objects.props.length;
     }
 }
-
