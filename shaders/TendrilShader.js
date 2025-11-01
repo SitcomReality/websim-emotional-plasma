@@ -43,6 +43,10 @@ export const TendrilShader = {
         uniform float noiseScale;
         uniform float edgeSoftness;
 
+        // New controls for peak-based rendering
+        uniform float peakThreshold;   // Noise value above which peaks begin to appear
+        uniform float peakSoftness;    // Range above threshold to smooth peaks
+
         ${GLSL_SNOISE}
 
         vec3 hsl2rgb(vec3 c) {
@@ -57,45 +61,58 @@ export const TendrilShader = {
                 discard;
             }
 
-            // Create plasma noise
-            vec2 noiseCoord1 = vec2(vUv.x * noiseScale * 0.5, vUv.y * noiseScale - time * flowSpeed);
-            vec2 noiseCoord2 = vec2(vUv.x * noiseScale * 0.5, vUv.y * noiseScale + time * flowSpeed * 0.8);
+            // Create plasma noise (two opposing flows for internal movement)
+            vec2 noiseCoord1 = vec2((vUv.x - 0.5) * noiseScale, vUv.y * noiseScale - time * flowSpeed);
+            vec2 noiseCoord2 = vec2((0.5 - vUv.x) * noiseScale, vUv.y * noiseScale + time * flowSpeed * 0.8);
 
-            float noisePattern = fbm(noiseCoord1, time * 0.1) * 0.6 + fbm(noiseCoord2, time * 0.1) * 0.4;
+            float noise1 = fbm(noiseCoord1, time * 0.1);
+            float noise2 = fbm(noiseCoord2, time * 0.1);
+            float noisePattern = noise1 * 0.55 + noise2 * 0.45;
 
             // Shape the tendril and soften its edges using noise
             float distanceFromCenter = abs(vUv.x - 0.5) * 2.0; // 0 at center, 1 at edge
             float tendrilShape = 1.0 - pow(distanceFromCenter, edgeSoftness);
-            float noisyEdge = tendrilShape - (fbm(vUv * 5.0, time * 0.2) * 0.2);
-            float alpha = smoothstep(0.0, 0.3, noisyEdge);
-            
+            float noisyEdge = tendrilShape - (fbm(vUv * 5.0, time * 0.2) * 0.15);
+
             // Fade ends of the tendril
             float lengthFade = pow(1.0 - abs(vUv.y - 0.5) * 2.0, fadeExponent);
-            alpha *= lengthFade;
 
-            // Final opacity
-            alpha = mix(baseOpacity, centerPeakOpacity, alpha);
+            // Map noise into a peak mask: only high peaks produce visible alpha/color
+            // peakMask goes from 0.0 to 1.0 where noisePattern > peakThreshold, smoothed by peakSoftness
+            float peakMask = smoothstep(peakThreshold, peakThreshold + peakSoftness, noisePattern);
 
+            // Combine shape, peak mask and length fade to compute final alpha
+            float peakAlpha = peakMask * noisyEdge * lengthFade;
+
+            // Add a tiny ambient base so very low glow can be seen if desired
+            float ambient = baseOpacity * 0.5;
+            float alpha = max(ambient * connectionStrength, peakAlpha * centerPeakOpacity * connectionStrength);
+
+            // Color blending based on interaction type
             vec3 finalColor;
-
-            // Blend colors and noise based on interaction type
             if (interactionType < 0.5) { // Harmonious
                 finalColor = mix(colorA, colorB, vUv.y);
+                // increase coherence slightly
+                finalColor = mix(finalColor, mix(colorA, colorB, 0.5), harmonyCohesion * peakMask);
             } else if (interactionType < 1.5) { // Draining A -> B
                 finalColor = mix(colorA, colorB, vUv.y);
+                // directional tint
+                finalColor = mix(finalColor, colorB, drainingFlow * 0.2 * peakMask);
             } else { // Conflicting
                 finalColor = mix(colorA, colorB, vUv.y);
-                // Flicker effect
-                if (mod(time * conflictFlicker * 2.0, 1.0) < 0.5) {
-                    alpha *= 0.7;
+                // flicker reduces alpha periodically for instability
+                if (mod(time * conflictFlicker, 1.0) < 0.5) {
+                    alpha *= 0.75;
                 }
             }
-            
-            // Add plasma pattern to color and brightness
-            vec3 plasmaColor = finalColor + (noisePattern * 0.3);
-            plasmaColor *= 1.0 + (noisePattern * 0.5);
 
-            gl_FragColor = vec4(plasmaColor * colorIntensity, alpha * connectionStrength);
+            // Only color where peaks exist; scale color by noisePattern so higher peaks are brighter
+            vec3 plasmaColor = finalColor * (0.5 + noisePattern * 0.8) * colorIntensity;
+
+            // Tone down color away from center for soft edges
+            plasmaColor *= smoothstep(1.0, 0.0, distanceFromCenter);
+
+            gl_FragColor = vec4(plasmaColor, alpha);
         }
     `
 };
@@ -111,17 +128,20 @@ export function createTendrilMaterial() {
             interactionType: { value: 0.0 }, // 0: harmonious, 1: draining, 2: conflicting
             connectionStrength: { value: 0.0 },
             turbulence: { value: 0.0 },
-            // NEW: Tunable uniforms
+            // Tunable uniforms
             flowSpeed: { value: 1.5 },
-            baseOpacity: { value: 0.9 },
-            centerPeakOpacity: { value: 1.0 },
-            fadeExponent: { value: 2.0 },
+            baseOpacity: { value: 0.03 },
+            centerPeakOpacity: { value: 1.2 },
+            fadeExponent: { value: 3.0 },
             harmonyCohesion: { value: 0.5 },
-            drainingFlow: { value: 2.0 },
+            drainingFlow: { value: 1.5 },
             conflictFlicker: { value: 10.0 },
-            colorIntensity: { value: 1.2 },
-            noiseScale: { value: 2.0 },
-            edgeSoftness: { value: 2.0 }
+            colorIntensity: { value: 2.2 },
+            noiseScale: { value: 4.0 },
+            edgeSoftness: { value: 3.0 },
+            // Peak-specific controls
+            peakThreshold: { value: 0.15 }, // tune between -1..1 (fbm typically in ~[-1,1], choose small positive)
+            peakSoftness: { value: 0.18 }   // smooth width above threshold
         },
         transparent: true,
         blending: THREE.AdditiveBlending,

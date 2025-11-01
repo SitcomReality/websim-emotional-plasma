@@ -14,6 +14,7 @@ class ConnectionTendril {
         this.geometry = new THREE.PlaneGeometry(this.config.tendrilWidth, 1, 1, 1);
 
         this.material = createTendrilMaterial();
+        // Apply tunable constants to material uniforms to make testing easier
         this.material.uniforms.baseOpacity.value = this.config.baseOpacity;
         this.material.uniforms.centerPeakOpacity.value = this.config.centerPeakOpacity;
         this.material.uniforms.fadeExponent.value = this.config.fadeExponent;
@@ -25,7 +26,21 @@ class ConnectionTendril {
         this.material.uniforms.noiseScale.value = this.config.noiseScale;
         this.material.uniforms.edgeSoftness.value = this.config.edgeSoftness;
 
+        // Expose peak controls so they can be tuned from TendrilConstants if desired
+        if (this.config.peakThreshold !== undefined) {
+            this.material.uniforms.peakThreshold.value = this.config.peakThreshold;
+        } else {
+            this.material.uniforms.peakThreshold.value = 0.15;
+        }
+        if (this.config.peakSoftness !== undefined) {
+            this.material.uniforms.peakSoftness.value = this.config.peakSoftness;
+        } else {
+            this.material.uniforms.peakSoftness.value = 0.18;
+        }
+
         this.mesh = new THREE.Mesh(this.geometry, this.material);
+        // Ensure the plane does not occlude and sits as an additive transparent layer
+        this.mesh.renderOrder = 1;
         this.scene.add(this.mesh);
         this.connectionStartTime = Date.now();
     }

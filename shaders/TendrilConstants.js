@@ -1,17 +1,17 @@
 export const TendrilConstants = {
     // Geometry & Shape
     tendrilWidth: 1.5,          // The width of the plane the tendril is drawn on.
-    noiseScale: 3.5,            // How zoomed-in the plasma noise is. Higher is more detailed.
-    edgeSoftness: 2.5,          // How soft the edges of the tendril are. Higher is softer.
+    noiseScale: 4.0,            // How zoomed-in the plasma noise is. Higher is more detailed.
+    edgeSoftness: 3.0,          // How soft the edges of the tendril are. Higher is softer.
     
     // Animation & Flow
     flowSpeed: 0.4,             // How fast noise flows through tendril
     wobbleAmount: 0.1,          // Base wobble intensity (no longer used for geometry)
     
     // Opacity & Blending
-    baseOpacity: 0.7,           // Base alpha value (0-1)
-    centerPeakOpacity: 0.9,     // Peak opacity at connection center
-    fadeExponent: 1.5,          // How sharply opacity fades at the connection points
+    baseOpacity: 0.03,          // Very low base alpha so background is mostly transparent
+    centerPeakOpacity: 1.2,     // Peak opacity at connection center (applies to noise peaks)
+    fadeExponent: 3.0,          // How sharply opacity fades at the connection points
     
     // Growth Animation
     growthDuration: 500,        // Milliseconds to fully grow
@@ -24,7 +24,7 @@ export const TendrilConstants = {
     
     // Color Blending
     colorBlendMode: 'mix',      // 'mix' for linear blend, could expand
-    colorIntensity: 1.8,         // Boost to make colors more vibrant
+    colorIntensity: 2.2,         // Boost to make colors more vibrant
 
     // Connection Logic
     connectionThreshold: 0.1,
