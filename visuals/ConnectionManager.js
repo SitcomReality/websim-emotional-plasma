@@ -72,9 +72,12 @@ class ConnectionTendril {
         this.mesh.up.copy(direction);
         this.mesh.lookAt(this.mesh.position.clone().add(lookAt));
 
-        // Distance-based strength: closer = stronger
+        // Distance-based strength: closer = stronger, fade out starting at 50% of max distance
         const maxDistance = 10.0; // Match connectionDistance in ConnectionManager
-        const distanceRatio = Math.max(0, 1.0 - (this.distance / maxDistance));
+        const fadeStartDistance = maxDistance * 0.5; // Start fading at 50% of max distance
+        const fadeRange = maxDistance - fadeStartDistance;
+        const distanceBeyondFadeStart = Math.max(0, this.distance - fadeStartDistance);
+        const distanceRatio = Math.max(0, 1.0 - (distanceBeyondFadeStart / fadeRange));
         this.material.uniforms.distanceStrength.value = distanceRatio;
 
         // Update material based on combined emotional state
@@ -137,7 +140,6 @@ export class ConnectionManager {
         const activeKeys = new Set();
 
         const connectionDistance = this.config.connectionDistance;
-        const falloffStartRatio = (this.config.opacityFalloffStart !== undefined) ? this.config.opacityFalloffStart : 0.5;
 
         for (let i = 0; i < entities.length; i++) {
             for (let j = i + 1; j < entities.length; j++) {
@@ -157,31 +159,8 @@ export class ConnectionManager {
                         this.connections.set(key, tendril);
                     } else {
                         // Update existing connection
-                        const conn = this.connections.get(key);
-                        conn.update(camera);
-
-                        // Compute opacity multiplier based on distance falloff:
-                        // distanceRatio = distance / connectionDistance (0 = same spot, 1 = max distance)
-                        const distanceRatio = Math.min(1.0, Math.max(0.0, distance / connectionDistance));
-
-                        // If within falloffStartRatio => full opacity (1)
-                        // From falloffStartRatio -> 1.0 we linearly map to 1 -> 0
-                        let opacityMultiplier = 1.0;
-                        if (distanceRatio <= falloffStartRatio) {
-                            opacityMultiplier = 1.0;
-                        } else {
-                            const t = (distanceRatio - falloffStartRatio) / (1.0 - falloffStartRatio);
-                            opacityMultiplier = Math.max(0.0, 1.0 - t);
-                        }
-
-                        if (conn.material && conn.material.uniforms && conn.material.uniforms.opacityMultiplier) {
-                            conn.material.uniforms.opacityMultiplier.value = opacityMultiplier;
-                        }
+                        this.connections.get(key).update(camera);
                     }
-                } else {
-                    // If there's an existing connection (just went beyond connectionDistance),
-                    // let it be handled in cleanup loop (it will be destroyed). We rely on the
-                    // opacityMultiplier being 0 by the time distance reaches max, so removal is visually smooth.
                 }
             }
         }
