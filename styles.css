@@ -202,6 +202,148 @@ body {
     width: 0%;
 }
 
+/* Level Editor */
+#level-editor-panel {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 280px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    border-left: 1px solid #333;
+    overflow-y: auto;
+    z-index: 200;
+    padding: 20px;
+    font-family: 'Space Mono', monospace;
+    transition: transform 0.3s ease;
+}
+
+#level-editor-panel.level-editor-hidden {
+    transform: translateX(100%);
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 12px;
+}
+
+.editor-header h2 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.editor-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.editor-section {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #222;
+}
+
+.editor-section h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    color: #aaa;
+}
+
+.editor-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.editor-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    background: #222;
+    color: #fff;
+    border: 1px solid #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.editor-btn:hover {
+    background: #333;
+    border-color: #555;
+}
+
+.editor-btn.active {
+    background: #fff;
+    color: #000;
+}
+
+#json-import {
+    width: 100%;
+    height: 100px;
+    background: #111;
+    color: #0f0;
+    border: 1px solid #333;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 8px;
+    resize: none;
+}
+
+.property-row {
+    margin-bottom: 12px;
+}
+
+.property-row label {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.property-row input,
+.property-row select {
+    width: 100%;
+    padding: 6px;
+    background: #111;
+    color: #fff;
+    border: 1px solid #333;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+}
+
+.property-row input:focus,
+.property-row select:focus {
+    border-color: #555;
+    outline: none;
+}
+
+#editor-info {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px;
+    border-radius: 2px;
+}
+
+#editor-info p {
+    margin: 4px 0;
+    line-height: 1.4;
+}
+
 @media (max-width: 768px) {
     .menu-header h1,
     .completion-header h1 {
@@ -243,4 +385,3 @@ body {
         font-size: 28px;
     }
 }
-
