@@ -31,7 +31,7 @@ export const TendrilShader = {
         uniform float connectionStrength; // 0 to 1 for growth
         uniform float turbulence;
         
-        // NEW: Tunable constants exposed as uniforms
+        // Tunable constants exposed as uniforms
         uniform float flowSpeed;
         uniform float baseOpacity;
         uniform float centerPeakOpacity;
@@ -40,6 +40,8 @@ export const TendrilShader = {
         uniform float drainingFlow;
         uniform float conflictFlicker;
         uniform float colorIntensity;
+        uniform float noiseScale;
+        uniform float edgeSoftness;
 
         ${GLSL_SNOISE}
 
@@ -49,50 +51,51 @@ export const TendrilShader = {
         }
 
         void main() {
-            // Growth animation
+            // Growth animation: shortens the visible area of the tendril
             float halfLength = connectionStrength * 0.5;
-            if (vUv.x < 0.5 - halfLength || vUv.x > 0.5 + halfLength) {
+            if (vUv.y < 0.5 - halfLength || vUv.y > 0.5 + halfLength) {
                 discard;
             }
 
-            // Opacity: peaks at center, fades towards ends
-            float edgeDistance = abs(vUv.x - 0.5) * 2.0;
-            float opacity = pow(1.0 - edgeDistance, fadeExponent);
-            opacity = smoothstep(0.0, 1.0, opacity);
-            opacity = mix(baseOpacity, centerPeakOpacity, opacity);
+            // Create plasma noise
+            vec2 noiseCoord1 = vec2(vUv.x * noiseScale * 0.5, vUv.y * noiseScale - time * flowSpeed);
+            vec2 noiseCoord2 = vec2(vUv.x * noiseScale * 0.5, vUv.y * noiseScale + time * flowSpeed * 0.8);
 
-            // Internal flow noise
-            vec2 noiseCoord1 = vec2(vUv.x * 4.0 - time * flowSpeed, vUv.y * 2.0);
-            vec2 noiseCoord2 = vec2(vUv.x * 4.0 + time * flowSpeed, vUv.y * 2.0);
+            float noisePattern = fbm(noiseCoord1, time * 0.1) * 0.6 + fbm(noiseCoord2, time * 0.1) * 0.4;
 
-            float noise1 = snoise(noiseCoord1);
-            float noise2 = snoise(noiseCoord2);
+            // Shape the tendril and soften its edges using noise
+            float distanceFromCenter = abs(vUv.x - 0.5) * 2.0; // 0 at center, 1 at edge
+            float tendrilShape = 1.0 - pow(distanceFromCenter, edgeSoftness);
+            float noisyEdge = tendrilShape - (fbm(vUv * 5.0, time * 0.2) * 0.2);
+            float alpha = smoothstep(0.0, 0.3, noisyEdge);
+            
+            // Fade ends of the tendril
+            float lengthFade = pow(1.0 - abs(vUv.y - 0.5) * 2.0, fadeExponent);
+            alpha *= lengthFade;
 
-            float combinedNoise = 0.0;
+            // Final opacity
+            alpha = mix(baseOpacity, centerPeakOpacity, alpha);
+
             vec3 finalColor;
 
             // Blend colors and noise based on interaction type
             if (interactionType < 0.5) { // Harmonious
-                combinedNoise = mix(noise1, noise2, harmonyCohesion) * 0.5;
-                finalColor = mix(colorA, colorB, vUv.x);
+                finalColor = mix(colorA, colorB, vUv.y);
             } else if (interactionType < 1.5) { // Draining A -> B
-                float flowProgress = smoothstep(0.0, 1.0, vUv.x);
-                combinedNoise = mix(noise1, -noise2, flowProgress) * drainingFlow;
-                finalColor = mix(colorA, colorB, vUv.x);
+                finalColor = mix(colorA, colorB, vUv.y);
             } else { // Conflicting
-                combinedNoise = (noise1 - noise2) * (snoise(vec2(time * conflictFlicker, 0.0)) * 0.5 + 0.5);
-                finalColor = mix(colorA, colorB, vUv.x);
+                finalColor = mix(colorA, colorB, vUv.y);
                 // Flicker effect
-                if (mod(time * conflictFlicker, 1.0) < 0.5) {
-                    finalColor *= 0.8;
+                if (mod(time * conflictFlicker * 2.0, 1.0) < 0.5) {
+                    alpha *= 0.7;
                 }
             }
+            
+            // Add plasma pattern to color and brightness
+            vec3 plasmaColor = finalColor + (noisePattern * 0.3);
+            plasmaColor *= 1.0 + (noisePattern * 0.5);
 
-            // Add noise to color
-            finalColor += combinedNoise * 0.2;
-            finalColor *= colorIntensity;
-
-            gl_FragColor = vec4(finalColor, opacity * connectionStrength);
+            gl_FragColor = vec4(plasmaColor * colorIntensity, alpha * connectionStrength);
         }
     `
 };
@@ -116,7 +119,9 @@ export function createTendrilMaterial() {
             harmonyCohesion: { value: 0.5 },
             drainingFlow: { value: 2.0 },
             conflictFlicker: { value: 10.0 },
-            colorIntensity: { value: 1.2 }
+            colorIntensity: { value: 1.2 },
+            noiseScale: { value: 2.0 },
+            edgeSoftness: { value: 2.0 }
         },
         transparent: true,
         blending: THREE.AdditiveBlending,

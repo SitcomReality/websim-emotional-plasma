@@ -10,18 +10,9 @@ class ConnectionTendril {
         this.config = config;
         this.isActive = true;
 
-        const curve = new THREE.CatmullRomCurve3([
-            this.ballA.position,
-            this.ballB.position
-        ]);
+        const distance = this.ballA.position.distanceTo(this.ballB.position);
+        this.geometry = new THREE.PlaneGeometry(this.config.tendrilWidth, 1, 1, 1);
 
-        this.geometry = new THREE.TubeGeometry(
-            curve,
-            this.config.tubeSegments,
-            this.config.tubeRadius,
-            this.config.radialSegments,
-            false
-        );
         this.material = createTendrilMaterial();
         this.material.uniforms.baseOpacity.value = this.config.baseOpacity;
         this.material.uniforms.centerPeakOpacity.value = this.config.centerPeakOpacity;
@@ -31,45 +22,37 @@ class ConnectionTendril {
         this.material.uniforms.drainingFlow.value = this.config.drainingFlow;
         this.material.uniforms.conflictFlicker.value = this.config.conflictFlicker;
         this.material.uniforms.colorIntensity.value = this.config.colorIntensity;
+        this.material.uniforms.noiseScale.value = this.config.noiseScale;
+        this.material.uniforms.edgeSoftness.value = this.config.edgeSoftness;
 
         this.mesh = new THREE.Mesh(this.geometry, this.material);
         this.scene.add(this.mesh);
         this.connectionStartTime = Date.now();
     }
 
-    update() {
+    update(camera) {
         // Update uniforms
         this.material.uniforms.time.value += 0.016; // Approx deltaTime
 
-        // Update curve with dynamic wobble
-        const points = [this.ballA.position.clone()];
+        const posA = this.ballA.position;
+        const posB = this.ballB.position;
+
+        // 1. Position at midpoint
+        const midpoint = new THREE.Vector3().addVectors(posA, posB).multiplyScalar(0.5);
+        this.mesh.position.copy(midpoint);
+
+        // 2. Scale to match distance
+        const distance = posA.distanceTo(posB);
+        this.mesh.scale.set(this.config.tendrilWidth, distance, 1);
+
+        // 3. Orient to face camera and align with balls
+        const up = new THREE.Vector3(0, 1, 0);
+        const lookAt = new THREE.Vector3().subVectors(camera.position, this.mesh.position).normalize();
         
-        for (let i = 0; i < this.config.curvePoints; i++) {
-            const t = i / (this.config.curvePoints + 1);
-            const midPoint = new THREE.Vector3().lerpVectors(this.ballA.position, this.ballB.position, t);
+        const direction = new THREE.Vector3().subVectors(posB, posA).normalize();
+        this.mesh.up.copy(direction);
+        this.mesh.lookAt(this.mesh.position.clone().add(lookAt));
 
-            // Dynamic wobble based on emotional states
-            const wobbleAmount = (Math.abs(this.ballA.emotionalState.arousal) + Math.abs(this.ballB.emotionalState.arousal)) * this.config.wobbleAmount;
-            const timeOffset = Date.now() * 0.001 * (1 + i);
-            midPoint.y += (Math.sin(timeOffset) * wobbleAmount);
-            midPoint.x += (Math.cos(timeOffset * 1.3) * wobbleAmount * 0.5);
-
-            points.push(midPoint);
-        }
-
-        points.push(this.ballB.position.clone());
-
-        const curve = new THREE.CatmullRomCurve3(points);
-
-        // Update geometry
-        this.mesh.geometry.dispose();
-        this.mesh.geometry = new THREE.TubeGeometry(
-            curve,
-            this.config.tubeSegments,
-            this.config.tubeRadius,
-            this.config.radialSegments,
-            false
-        );
 
         // Update material based on combined emotional state
         const colorA = new THREE.Color().setHSL(this.ballA.emotionalState.getColor().h / 360, 0.9, 0.6);
@@ -126,7 +109,7 @@ export class ConnectionManager {
             : `${ballB.mesh.uuid}-${ballA.mesh.uuid}`;
     }
 
-    update(entities) {
+    update(entities, camera) {
         const checkedPairs = new Set();
         const activeKeys = new Set();
 
@@ -153,7 +136,7 @@ export class ConnectionManager {
                         this.connections.set(key, tendril);
                     } else {
                         // Update existing connection
-                        this.connections.get(key).update();
+                        this.connections.get(key).update(camera);
                     }
                 }
             }

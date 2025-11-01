@@ -60,7 +60,7 @@ export class GameEngine {
 
         // Update connection visuals
         if (this.connectionManager) {
-            this.connectionManager.update(this.entities);
+            this.connectionManager.update(this.entities, this.camera);
         }
 
         // Update camera to follow player
