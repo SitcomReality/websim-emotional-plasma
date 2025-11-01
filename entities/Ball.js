@@ -36,6 +36,8 @@ export class Ball {
         // Dialogue properties
         this.lastDialogueTime = 0;
         this.dialogueCooldown = 3000; // 3 seconds
+        this.dialogueData = null; // To be loaded from level file
+        this.canMove = true;
         
         // Nearby balls for plasma interaction
         this.nearbyBalls = [];
@@ -84,7 +86,7 @@ export class Ball {
         this.stateMachine.update(deltaTime);
 
         // Update NPC behavior if applicable
-        if (this.isNPC && this.behavior) {
+        if (this.isNPC && this.behavior && this.canMove) {
             this.behavior.update(this, deltaTime);
             this.updatePhysics(deltaTime);
         }

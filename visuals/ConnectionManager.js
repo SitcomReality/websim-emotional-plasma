@@ -177,7 +177,6 @@ export class ConnectionManager {
         // Clean up old/inactive connections
         for (const [key, connection] of this.connections.entries()) {
             if (!activeKeys.has(key)) {
-                this.triggerConnectionDialogue(connection.ballA, connection.ballB, "goodbye");
                 connection.destroy();
                 this.connections.delete(key);
             }

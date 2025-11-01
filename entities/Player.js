@@ -6,6 +6,7 @@ export class Player extends Ball {
         super(scene, camera, new THREE.Vector3(0, 0.5, 0), 0.5);
         this.speed = 50;
         this.isPlayer = true;
+        this.canMove = true;
         
         // Set initial emotional state (slightly positive, neutral arousal, connected)
         this.emotionalState.valence = 0.3;
@@ -14,7 +15,9 @@ export class Player extends Ball {
     }
     
     update(deltaTime, inputManager) {
-        this.handleInput(deltaTime, inputManager);
+        if (this.canMove) {
+            this.handleInput(deltaTime, inputManager);
+        }
         this.updatePhysics(deltaTime);
         
         // Call parent update

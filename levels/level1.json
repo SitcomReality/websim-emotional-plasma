@@ -7,7 +7,52 @@
     "npcs": [
         {
             "position": [5, 0.5, 5],
-            "state": { "valence": -0.8, "arousal": 0.7, "connectedness": -0.6 }
+            "state": { "valence": -0.8, "arousal": 0.7, "connectedness": -0.6 },
+            "dialogue": {
+                "anxious_greeting": {
+                    "conditions": [ { "type": "state", "dimension": "arousal", "range": [0.5, 1] } ],
+                    "text": "I can't stop shaking... Everything is just too much right now.",
+                    "responses": [
+                        { "text": "Take a deep breath. It's okay.", "effects": [ { "target": "npc", "dimension": "arousal", "value": -0.2 } ], "nextNodeId": "thanks_calm" },
+                        { "text": "You seem anxious.", "nextNodeId": "anxious_reply" }
+                    ]
+                },
+                "sad_greeting": {
+                    "conditions": [ { "type": "state", "dimension": "valence", "range": [-1, -0.5] } ],
+                    "text": "Everything feels so... gray. What's the point?",
+                    "responses": [
+                        { "text": "I'm here for you.", "effects": [ { "target": "npc", "dimension": "connectedness", "value": 0.3 }, { "target": "player", "dimension": "valence", "value": 0.1 } ], "nextNodeId": "thanks_connect" },
+                        { "text": "Try to cheer up.", "effects": [ { "target": "npc", "dimension": "valence", "value": -0.1 } ], "nextNodeId": "cheer_up_fail" }
+                    ]
+                },
+                "default_greeting": {
+                    "text": "Oh, hello there. Didn't see you.",
+                    "responses": [
+                        { "text": "How are you?", "nextNodeId": "fine_thanks" },
+                        { "text": "(Leave)", "nextNodeId": "end" }
+                    ]
+                },
+                "thanks_calm": {
+                    "text": "Thank you... that... that actually helps a little.",
+                    "responses": [ { "text": "(Leave)", "nextNodeId": "end" } ]
+                },
+                "anxious_reply": {
+                    "text": "You think I don't know that? Stating the obvious doesn't help!",
+                    "responses": [ { "text": "(Leave)", "nextNodeId": "end" } ]
+                },
+                "thanks_connect": {
+                    "text": "Really? That means a lot to me. I feel a little less alone.",
+                    "responses": [ { "text": "(Leave)", "nextNodeId": "end" } ]
+                },
+                "cheer_up_fail": {
+                    "text": "If only it were that easy.",
+                    "responses": [ { "text": "(Leave)", "nextNodeId": "end" } ]
+                },
+                "fine_thanks": {
+                    "text": "I'm... managing. Thanks for asking.",
+                    "responses": [ { "text": "(Leave)", "nextNodeId": "end" } ]
+                }
+            }
         },
         {
             "position": [-5, 0.5, -5],
@@ -46,4 +91,3 @@
         }
     ]
 }
-

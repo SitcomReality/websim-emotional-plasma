@@ -46,6 +46,10 @@ export class LevelLoader {
                             npcData.state.connectedness || 0
                         );
                     }
+
+                    if (npcData.dialogue) {
+                        npc.dialogueData = npcData.dialogue;
+                    }
                     
                     npc.isNPC = true;
                     npc.behavior = new NPCBehavior();

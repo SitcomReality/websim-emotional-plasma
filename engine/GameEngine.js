@@ -14,6 +14,7 @@ export class GameEngine {
         
         this.clock = new THREE.Clock();
         this.isRunning = false;
+        this.dialogueInteractionDist = 3.0;
     }
     
     start() {
@@ -38,6 +39,29 @@ export class GameEngine {
     }
     
     update(deltaTime) {
+        if (this.dialogueManager.isActive) {
+            if (this.inputManager.justPressed.space) {
+                this.dialogueManager.handleInput();
+            }
+        } else {
+             // Normal game updates only when not in dialogue
+            this.updateEntities(deltaTime);
+            this.checkForDialogueStart();
+        }
+        
+        // Update dialogue bubbles (old system)
+        if (this.dialogueManager) {
+            this.dialogueManager.update();
+        }
+
+        // Update camera to follow player
+        this.updateCamera(deltaTime);
+
+        // Input manager late update
+        this.inputManager.update();
+    }
+
+    updateEntities(deltaTime) {
         // Update entities
         for (const entity of this.entities) {
              if (entity.isPlayer) {
@@ -64,6 +88,11 @@ export class GameEngine {
             this.connectionManager.update(this.entities, this.camera);
         }
 
+        // When dialogue ends, unlock movement
+        if (!this.dialogueManager.isActive && !this.player.canMove) {
+            this.entities.forEach(e => e.canMove = true);
+        }
+
         // Update dialogue bubbles
         if (this.dialogueManager) {
             this.dialogueManager.update();
@@ -71,6 +100,33 @@ export class GameEngine {
 
         // Update camera to follow player
         this.updateCamera(deltaTime);
+    }
+
+    checkForDialogueStart() {
+        if (this.inputManager.justPressed.space) {
+            const closestNPC = this.findClosestNPC();
+            if (closestNPC) {
+                this.dialogueManager.startDialogue(this.player, closestNPC);
+                // Lock movement
+                this.player.canMove = false;
+                closestNPC.canMove = false;
+            }
+        }
+    }
+    
+    findClosestNPC() {
+        let closestDist = this.dialogueInteractionDist;
+        let closestNPC = null;
+        for (const entity of this.entities) {
+            if (entity.isNPC && entity.dialogueData) {
+                const dist = this.player.position.distanceTo(entity.position);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestNPC = entity;
+                }
+            }
+        }
+        return closestNPC;
     }
 
     handleInteractions(deltaTime) {
