@@ -1,0 +1,49 @@
+{
+    "name": "First Steps",
+    "player": {
+        "position": [0, 0.5, 5],
+        "state": { "valence": 0.3, "arousal": 0, "connectedness": 0.2 }
+    },
+    "npcs": [
+        {
+            "position": [5, 0.5, 5],
+            "state": { "valence": -0.8, "arousal": 0.7, "connectedness": -0.6 }
+        },
+        {
+            "position": [-5, 0.5, -5],
+            "state": { "valence": 0.7, "arousal": -0.5, "connectedness": 0.5 }
+        },
+        {
+            "position": [0, 0.5, -10]
+        }
+    ],
+    "zones": [
+        { "type": "Peaceful Sanctuary", "position": [10, 0.5, 10], "radius": 4 },
+        { "type": "Energy Surge", "position": [-10, 0.5, 10], "radius": 3.5 },
+        { "type": "Isolation Pit", "position": [-10, 0.5, -10], "radius": 4 },
+        { "type": "Chaotic Vortex", "position": [10, 0.5, -10], "radius": 3 }
+    ],
+    "staticProps": [
+        {
+            "position": [0, 0.5, -20],
+            "size": [40, 2, 2],
+            "properties": { "color": "0x555555" }
+        },
+        {
+            "position": [20, 0.5, 0],
+            "size": [2, 2, 40],
+            "properties": { "color": "0x555555" }
+        },
+        {
+            "position": [-20, 0.5, 0],
+            "size": [2, 2, 40],
+            "properties": { "color": "0x555555" }
+        },
+        {
+            "position": [0, 0.5, 20],
+            "size": [40, 2, 2],
+            "properties": { "color": "0x555555" }
+        }
+    ]
+}
+
