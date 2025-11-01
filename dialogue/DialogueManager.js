@@ -17,6 +17,18 @@ export class DialogueManager {
         this.ui = new DialogueUI();
     }
 
+    // Allow other systems (e.g. ConnectionManager) to make an NPC "speak" a short line
+    say(npc, text, lifespan = 3000) {
+        if (!npc || !npc.mesh) return;
+        try {
+            const bubble = new SpeechBubble(text, npc, this.camera);
+            bubble.lifespan = lifespan;
+            this.activeBubbles.push(bubble);
+        } catch (e) {
+            console.warn('Failed to create speech bubble:', e);
+        }
+    }
+
     startDialogue(player, npc) {
         if (this.isActive || !npc.dialogueData) return;
 
