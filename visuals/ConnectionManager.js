@@ -73,12 +73,19 @@ class ConnectionTendril {
         this.mesh.lookAt(this.mesh.position.clone().add(lookAt));
 
         // Distance-based strength: closer = stronger, fade out starting at 50% of max distance
-        const maxDistance = 10.0; // Match connectionDistance in ConnectionManager
-        const fadeStartDistance = maxDistance * 0.5; // Start fading at 50% of max distance
+        const maxDistance = this.config.connectionDistance;
+        const fadeStartDistance = maxDistance * (this.config.connectionFadeStartRatio !== undefined ? this.config.connectionFadeStartRatio : 0.5);
         const fadeRange = maxDistance - fadeStartDistance;
         const distanceBeyondFadeStart = Math.max(0, this.distance - fadeStartDistance);
-        const distanceRatio = Math.max(0, 1.0 - (distanceBeyondFadeStart / fadeRange));
+        // Compute a 0..1 strength where 1 is close and 0 is at/after maxDistance.
+        let distanceRatio = fadeRange > 0 ? Math.max(0, 1.0 - (distanceBeyondFadeStart / fadeRange)) : 0;
+        // Assign to uniform (shader will apply an eased/pow fade based on connectionFadeExponent)
         this.material.uniforms.distanceStrength.value = distanceRatio;
+
+        // Propagate fade exponent from config to material (if available)
+        if (this.config.connectionFadeExponent !== undefined) {
+            this.material.uniforms.connectionFadeExponent.value = this.config.connectionFadeExponent;
+        }
 
         // Update material based on combined emotional state
         const colorA = new THREE.Color().setHSL(this.ballA.emotionalState.getColor().h / 360, 0.9, 0.6);

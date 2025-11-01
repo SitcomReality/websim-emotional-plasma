@@ -48,6 +48,9 @@ export const TendrilShader = {
         uniform float peakThreshold;   // Noise value above which peaks begin to appear
         uniform float peakSoftness;    // Range above threshold to smooth peaks
 
+        // New: distance fade exponent to make fade stronger near max range
+        uniform float connectionFadeExponent;
+
         ${GLSL_SNOISE}
 
         vec3 hsl2rgb(vec3 c) {
@@ -90,7 +93,9 @@ export const TendrilShader = {
             float alpha = max(ambient * connectionStrength, peakAlpha * centerPeakOpacity * connectionStrength);
 
             // Distance strength modulates the overall opacity: closer = stronger
-            alpha *= mix(0.2, 1.0, distanceStrength);
+            // Remove non-zero minimum and apply an eased/pow fade so alpha -> 0 at distanceStrength==0
+            float eased = pow(clamp(distanceStrength, 0.0, 1.0), connectionFadeExponent);
+            alpha *= mix(0.0, 1.0, eased);
 
             // Color blending based on interaction type
             vec3 finalColor;
@@ -144,6 +149,8 @@ export function createTendrilMaterial() {
             colorIntensity: { value: 2.2 },
             noiseScale: { value: 4.0 },
             edgeSoftness: { value: 3.0 },
+            // New uniform to control distance fade curve
+            connectionFadeExponent: { value: 2.0 },
             // Peak-specific controls
             peakThreshold: { value: 0.15 }, // tune between -1..1 (fbm typically in ~[-1,1], choose small positive)
             peakSoftness: { value: 0.18 }   // smooth width above threshold

@@ -29,5 +29,6 @@ export const TendrilConstants = {
     // Connection Logic
     connectionThreshold: 0.1,
     connectionDistance: 10,
-    connectionFadeStartRatio: 0.5  // Start fading opacity at 50% of max connection distance
+    connectionFadeStartRatio: 0.5,  // Start fading opacity at 50% of max connection distance
+    connectionFadeExponent: 2.0     // New: how strongly the tendril fades toward max distance
 };
