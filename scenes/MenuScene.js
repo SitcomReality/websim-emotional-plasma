@@ -43,11 +43,9 @@ export class MenuScene {
         const editorBtn = this.container.querySelector('#open-editor');
         if (editorBtn) {
             editorBtn.addEventListener('click', () => {
-                if (window.levelEditor) {
-                    window.levelEditor.toggle();
-                } else {
-                    console.warn('LevelEditor not initialized');
-                }
+                // Launch a blank level and open the editor inside the game scene
+                window.__startEditorAfterLoad = true;
+                this.onLevelSelected('levels/blank.json');
             });
         }
     }

@@ -76,6 +76,15 @@ export class GameScene {
             const loaded = await this.loadLevel(this.currentLevelPath);
             if (loaded && this.engine) {
                 this.engine.start();
+
+                // If menu requested to start in editor mode, open it now
+                if (window.__startEditorAfterLoad) {
+                    if (window.levelEditor) {
+                        window.levelEditor.isActive = false; // ensure toggle opens it
+                        window.levelEditor.toggle();
+                    }
+                    window.__startEditorAfterLoad = false;
+                }
             }
         }
     }

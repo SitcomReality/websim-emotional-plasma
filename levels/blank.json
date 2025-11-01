@@ -1,0 +1,11 @@
+{
+  "name": "Blank Editor Level",
+  "player": {
+    "position": [0, 0.5, 0],
+    "state": { "valence": 0, "arousal": 0, "connectedness": 0 }
+  },
+  "npcs": [],
+  "zones": [],
+  "staticProps": []
+}
+
