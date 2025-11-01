@@ -18,6 +18,9 @@ export class MenuScene {
                     <button class="menu-button" data-level="levels/level1.json">
                         Start Game
                     </button>
+                    <button class="menu-button" id="open-editor">
+                        Level Editor
+                    </button>
                 </div>
             </div>
         `;
@@ -36,6 +39,17 @@ export class MenuScene {
                 this.onLevelSelected(levelPath);
             });
         });
+
+        const editorBtn = this.container.querySelector('#open-editor');
+        if (editorBtn) {
+            editorBtn.addEventListener('click', () => {
+                if (window.levelEditor) {
+                    window.levelEditor.toggle();
+                } else {
+                    console.warn('LevelEditor not initialized');
+                }
+            });
+        }
     }
 
     async onExit() {
@@ -48,4 +62,3 @@ export class MenuScene {
     update(deltaTime) {}
     render(renderer, camera) {}
 }
-
