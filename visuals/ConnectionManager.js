@@ -47,9 +47,6 @@ class ConnectionTendril {
         this.mesh.renderOrder = 1;
         this.scene.add(this.mesh);
         this.connectionStartTime = Date.now();
-        this.isDying = false;
-        this.deathStartTime = 0;
-        this.deathDuration = (this.config.deathDuration !== undefined) ? this.config.deathDuration : 300; // ms
     }
 
     update(camera) {
@@ -111,30 +108,7 @@ class ConnectionTendril {
 
         // Animate growth
         const timeSinceCreation = Date.now() - this.connectionStartTime;
-        const growthPhase = Math.min(1.0, timeSinceCreation / this.config.growthDuration);
-
-        if (this.isDying) {
-            // Fade out smoothly from current strength (or full) to 0 over deathDuration
-            const elapsed = Date.now() - this.deathStartTime;
-            const t = Math.max(0, Math.min(1, elapsed / this.deathDuration));
-            this.material.uniforms.connectionStrength.value = Math.max(0, (1.0 - t) * growthPhase);
-            if (t >= 1.0) {
-                // mark for removal (actual removal handled by ConnectionManager cleanup)
-                this.destroy();
-            }
-        } else {
-            this.material.uniforms.connectionStrength.value = growthPhase;
-        }
-    }
-
-    startDying() {
-        if (this.isDying) return;
-        this.isDying = true;
-        this.deathStartTime = Date.now();
-        // ensure starting from current material value if available
-        if (this.material && this.material.uniforms) {
-            // no-op here; update() will lerp based on timestamps
-        }
+        this.material.uniforms.connectionStrength.value = Math.min(1.0, timeSinceCreation / this.config.growthDuration);
     }
 
     destroy() {
@@ -163,6 +137,7 @@ export class ConnectionManager {
         const activeKeys = new Set();
 
         const connectionDistance = this.config.connectionDistance;
+        const falloffStartRatio = (this.config.opacityFalloffStart !== undefined) ? this.config.opacityFalloffStart : 0.5;
 
         for (let i = 0; i < entities.length; i++) {
             for (let j = i + 1; j < entities.length; j++) {
@@ -182,25 +157,39 @@ export class ConnectionManager {
                         this.connections.set(key, tendril);
                     } else {
                         // Update existing connection
-                        this.connections.get(key).update(camera);
+                        const conn = this.connections.get(key);
+                        conn.update(camera);
+
+                        // Compute opacity multiplier based on distance falloff:
+                        // distanceRatio = distance / connectionDistance (0 = same spot, 1 = max distance)
+                        const distanceRatio = Math.min(1.0, Math.max(0.0, distance / connectionDistance));
+
+                        // If within falloffStartRatio => full opacity (1)
+                        // From falloffStartRatio -> 1.0 we linearly map to 1 -> 0
+                        let opacityMultiplier = 1.0;
+                        if (distanceRatio <= falloffStartRatio) {
+                            opacityMultiplier = 1.0;
+                        } else {
+                            const t = (distanceRatio - falloffStartRatio) / (1.0 - falloffStartRatio);
+                            opacityMultiplier = Math.max(0.0, 1.0 - t);
+                        }
+
+                        if (conn.material && conn.material.uniforms && conn.material.uniforms.opacityMultiplier) {
+                            conn.material.uniforms.opacityMultiplier.value = opacityMultiplier;
+                        }
                     }
+                } else {
+                    // If there's an existing connection (just went beyond connectionDistance),
+                    // let it be handled in cleanup loop (it will be destroyed). We rely on the
+                    // opacityMultiplier being 0 by the time distance reaches max, so removal is visually smooth.
                 }
             }
         }
 
-        // Start fading out connections that went out of range, and update all connections
+        // Clean up old/inactive connections
         for (const [key, connection] of this.connections.entries()) {
             if (!activeKeys.has(key)) {
-                // If not already dying, begin quick fade-out
-                if (!connection.isDying) {
-                    connection.startDying();
-                }
-            }
-            // Ensure dying tendrils are still updated so they can fade before removal
-            if (connection.isActive) {
-                connection.update(camera);
-            } else {
-                // fully destroyed by tendril; remove from map
+                connection.destroy();
                 this.connections.delete(key);
             }
         }

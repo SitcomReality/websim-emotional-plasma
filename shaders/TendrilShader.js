@@ -31,6 +31,7 @@ export const TendrilShader = {
         uniform float connectionStrength; // 0 to 1 for growth
         uniform float turbulence;
         uniform float distanceStrength; // 0 to 1 based on proximity (1 = closest, 0 = farthest)
+        uniform float opacityMultiplier; // NEW: global multiplier [0..1] driven by distance falloff
         
         // Tunable constants exposed as uniforms
         uniform float flowSpeed;
@@ -92,6 +93,9 @@ export const TendrilShader = {
             // Distance strength modulates the overall opacity: closer = stronger
             alpha *= mix(0.2, 1.0, distanceStrength);
 
+            // Apply global opacity multiplier (driven by connection distance falloff) so tendril fades before it's destroyed
+            alpha *= clamp(opacityMultiplier, 0.0, 1.0);
+
             // Color blending based on interaction type
             vec3 finalColor;
             if (interactionType < 0.5) { // Harmonious
@@ -133,6 +137,8 @@ export function createTendrilMaterial() {
             connectionStrength: { value: 0.0 },
             turbulence: { value: 0.0 },
             distanceStrength: { value: 1.0 },
+            opacityMultiplier: { value: 1.0 }, // NEW default full opacity
+
             // Tunable uniforms
             flowSpeed: { value: 1.5 },
             baseOpacity: { value: 0.03 },

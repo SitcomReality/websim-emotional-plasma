@@ -28,5 +28,9 @@ export const TendrilConstants = {
 
     // Connection Logic
     connectionThreshold: 0.1,
-    connectionDistance: 10
+    connectionDistance: 10,
+
+    // Opacity falloff: when distance / connectionDistance <= opacityFalloffStart => full opacity,
+    // when >= 1.0 => fully transparent (opacityMultiplier = 0)
+    opacityFalloffStart: 0.5
 };
