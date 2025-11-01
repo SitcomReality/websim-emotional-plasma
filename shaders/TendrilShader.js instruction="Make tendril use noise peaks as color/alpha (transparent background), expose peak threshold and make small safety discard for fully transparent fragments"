@@ -1,0 +1,144 @@
+import * as THREE from 'three';
+import { GLSL_SNOISE } from './PlasmaNoise.js';
+
+export const TendrilShader = {
+    vertexShader: `
+        attribute vec3 tangent;
+        varying vec2 vUv;
+        varying float vDistortion;
+
+        uniform float time;
+        uniform float turbulence;
+
+        ${GLSL_SNOISE}
+
+        void main() {
+            vUv = uv;
+
+            // Add turbulence/flicker for conflicting states (subtle vertex displacement)
+            float displacement = snoise(vec2(position.x * 2.0 + time * 2.0, position.y * 2.0 + time * 2.0)) * 0.04 * turbulence;
+            vec3 newPosition = position + normal * displacement;
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
+        }
+    `,
+    fragmentShader: `
+        varying vec2 vUv;
+        uniform float time;
+        uniform vec3 colorA;
+        uniform vec3 colorB;
+        uniform float interactionType; // 0: harmonious, 1: draining A->B, 2: conflicting
+        uniform float connectionStrength; // 0 to 1 for growth
+        uniform float turbulence;
+        
+        // Tunable constants exposed as uniforms
+        uniform float flowSpeed;
+        uniform float baseOpacity;
+        uniform float centerPeakOpacity;
+        uniform float fadeExponent;
+        uniform float harmonyCohesion;
+        uniform float drainingFlow;
+        uniform float conflictFlicker;
+        uniform float colorIntensity;
+        uniform float noiseScale;
+        uniform float edgeSoftness;
+        uniform float peakThreshold; // NEW - threshold for visible peaks
+
+        ${GLSL_SNOISE}
+
+        vec3 hsl2rgb(vec3 c) {
+            vec3 rgb = clamp(abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0);
+            return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
+        }
+
+        void main() {
+            // Growth animation: shortens the visible area of the tendril
+            float halfLength = connectionStrength * 0.5;
+            if (vUv.y < 0.5 - halfLength || vUv.y > 0.5 + halfLength) {
+                discard;
+            }
+
+            // Create layered plasma noise (centered so peaks align along length)
+            vec2 noiseCoord1 = vec2((vUv.x - 0.5) * noiseScale, (vUv.y - 0.5) * noiseScale - time * flowSpeed);
+            vec2 noiseCoord2 = vec2((vUv.x - 0.5) * noiseScale * 0.6, (vUv.y - 0.5) * noiseScale + time * flowSpeed * 0.8);
+
+            float n1 = fbm(noiseCoord1, time * 0.1);
+            float n2 = fbm(noiseCoord2, time * 0.12);
+            float noisePattern = mix(n1, n2, 0.45);
+
+            // Normalize noisePattern to roughly 0..1 (fbm returns ~[-1,1] range)
+            float noiseNorm = clamp((noisePattern + 1.0) * 0.5, 0.0, 1.0);
+
+            // Shape the tendril cross-section and soften its edges
+            float distanceFromCenter = abs(vUv.x - 0.5) * 2.0; // 0 at center, 1 at edge
+            float tendrilShape = pow(1.0 - distanceFromCenter, edgeSoftness);
+
+            // Allow noise peaks to define visible "plasma" — only high noise contributes color/alpha
+            float peakFactor = smoothstep(peakThreshold, 1.0, noiseNorm);
+            
+            // Slightly modulate peak factor by shape to fade at edges
+            peakFactor *= tendrilShape;
+
+            // Fade ends of the tendril along its length
+            float lengthFade = pow(1.0 - abs(vUv.y - 0.5) * 2.0, fadeExponent);
+            peakFactor *= lengthFade;
+
+            // Compose final alpha: mostly transparent background, peaks produce higher alpha
+            float alpha = baseOpacity * peakFactor * centerPeakOpacity;
+
+            // Small discard to avoid rendering fully transparent background fragments
+            if (alpha < 0.01) {
+                discard;
+            }
+
+            vec3 finalColor = mix(colorA, colorB, vUv.y);
+            // Slight color modulation from noise to get plasma feel
+            finalColor += (noiseNorm - 0.5) * 0.6; // subtle tint from noise
+            finalColor *= colorIntensity;
+
+            // Interaction-specific tweaks (subtle)
+            if (interactionType > 1.5) { // conflicting -> increase turbulence flicker
+                float flick = (sin(time * conflictFlicker * 2.0 + vUv.x * 10.0) * 0.5 + 0.5);
+                alpha *= mix(0.8, 1.0, flick) * (1.0 + turbulence * 0.4);
+            } else if (interactionType > 0.5) { // draining -> directional bias
+                finalColor = mix(finalColor, vec3(0.85, 0.65, 0.5), 0.15); // subtle warm bias
+            } else { // harmonious -> slightly brighter center
+                finalColor *= 1.05 + harmonyCohesion * 0.2;
+            }
+
+            // Final output: color only where noise peaks, leaving background transparent
+            gl_FragColor = vec4(finalColor, alpha * connectionStrength);
+        }
+    `
+};
+
+export function createTendrilMaterial() {
+    return new THREE.ShaderMaterial({
+        vertexShader: TendrilShader.vertexShader,
+        fragmentShader: TendrilShader.fragmentShader,
+        uniforms: {
+            time: { value: 0.0 },
+            colorA: { value: new THREE.Color(0xffffff) },
+            colorB: { value: new THREE.Color(0xffffff) },
+            interactionType: { value: 0.0 }, // 0: harmonious, 1: draining, 2: conflicting
+            connectionStrength: { value: 0.0 },
+            turbulence: { value: 0.0 },
+            // Tunable uniforms
+            flowSpeed: { value: 1.2 },
+            baseOpacity: { value: 0.12 },
+            centerPeakOpacity: { value: 1.0 },
+            fadeExponent: { value: 2.0 },
+            harmonyCohesion: { value: 0.5 },
+            drainingFlow: { value: 2.0 },
+            conflictFlicker: { value: 10.0 },
+            colorIntensity: { value: 1.2 },
+            noiseScale: { value: 2.4 },
+            edgeSoftness: { value: 3.0 },
+            peakThreshold: { value: 0.55 }
+        },
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide
+    });
+}
