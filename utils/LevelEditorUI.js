@@ -1,3 +1,4 @@
+import { ZonePresets } from '../levels/ZonePresets.js';
 export class LevelEditorUI {
     constructor(levelEditor) {
         this.levelEditor = levelEditor;
@@ -49,7 +50,7 @@ export class LevelEditorUI {
             return;
         }
 
-        let html = '<div class="property-panel">';
+        let html = '<div class="property-panel>';
         html += this.buildPropertyHTML(selectedObject);
         html += '</div>';
         panel.innerHTML = html;
@@ -101,7 +102,6 @@ export class LevelEditorUI {
     }
 
     buildZonePropertyHTML(zone) {
-        const { ZonePresets } = await import('../levels/ZonePresets.js');
         const zoneTypes = Object.keys(ZonePresets);
         return `
             <div class="property-row">
@@ -145,3 +145,4 @@ export class LevelEditorUI {
         return (objects.player ? 1 : 0) + objects.npcs.length + objects.zones.length + objects.props.length;
     }
 }
+
